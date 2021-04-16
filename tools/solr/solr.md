@@ -14,8 +14,24 @@ Solr是最流行的企业级搜寻引擎，Solr 4还增加了NoSQL支援。
 #### 依赖环境
 * [java8及以上版本](https://www.oracle.com/java/technologies/oracle-java-archive-downloads.html)
 
+#### 目录结构
+```text
+bin：solr的运行脚本
 
-#### 启动solr
+contrib：solr的一些软件/插件，用于增强solr的功能。
+
+dist：该目录包含jar文件，以及相关的依赖文件。
+
+docs：solr的API文档
+
+example：solr工程示例：
+
+licenses：solr相关引用的一些许可信息
+
+Server:solr的核心，可以看成是一个数据库里面有多个实例
+```
+
+#### 按照示例启动solr
 执行启动命令
 ```ssh
 ./bin/solr start -e cloud
@@ -125,6 +141,67 @@ java -server -Xms512m -Xmx512m -XX:+UseG1GC -XX:+PerfDisableSharedMem -XX:+Paral
 -Dsolr.log.muteconsole -XX:OnOutOfMemoryError=/var/local/solr-8.8.2/bin/oom_solr.sh 8983 
 /var/local/solr-8.8.2/example/cloud/node1/solr/../logs -jar start.jar --module=http
 ```
-此数据可以在solr的控制台中查看 `http://localhost:8983/solr/#/`
+此数据可以在solr的控制台中查看 `http://localhost:8983/solr/#/`  
+关闭solr
+```text
+bin/solr stop -p 8983
+or
+bin/solr stop -all
+```
+自定义启动
+```text
+Creating Solr home directory /var/local/solr-8.8.2/example/cloud/node1/solr
+Cloning /var/local/solr-8.8.2/example/cloud/node1 into
+   /var/local/solr-8.8.2/example/cloud/node2
+Cloning /var/local/solr-8.8.2/example/cloud/node1 into
+   /var/local/solr-8.8.2/example/cloud/node3
+
+Starting up Solr on port 8888 using command:
+"bin/solr" start -cloud -p 8888 -s "example/cloud/node1/solr"
+  
+Starting up Solr on port 7574 using command:
+"bin/solr" start -cloud -p 7574 -s "example/cloud/node2/solr" -z localhost:9888
+
+Starting up Solr on port 8984 using command:
+"bin/solr" start -cloud -p 8984 -s "example/cloud/node3/solr" -z localhost:9888
+```
+
+
+
+
+#### 关于ZooKeeper
+solr内部集了ZooKeeper，当solr启动的时候ZooKeeper也会启动，solr关闭的时候ZooKeeper也会关闭，它不提供任何故障转移，依赖于它的任何分片或Solr实例也无法彼此通信，因此生产中最好使用外部的ZooKeeper
+
+[zookeeper官网](https://zookeeper.apache.org/)
+
+若是单机测试时不想自己启动ZooKeeper，可以修改配置文件下的`zoo.cfg`文件，放开指定端口的配置，这样所有的solr启动实例都会注册到这个zookeeper中(启动第二次会报错，然后注册已启动的zk实例中)
+
+
+#### 同步数据库数据
+
+
+
+#### 添加插件
+* 添加拼音分词器
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
