@@ -9,7 +9,8 @@ Solr是最流行的企业级搜寻引擎，Solr 4还增加了NoSQL支援。
 #### 资源
 * [官网](https://solr.apache.org)  
 * [v8.8文档](https://solr.apache.org/guide/8_8/)  
-
+* [IK分词器](https://code.google.com/archive/p/ik-analyzer/downloads)
+(https://search.maven.org/search?q=com.github.magese)
 
 #### 依赖环境
 * [java8及以上版本](https://www.oracle.com/java/technologies/oracle-java-archive-downloads.html)
@@ -179,12 +180,73 @@ solr内部集了ZooKeeper，当solr启动的时候ZooKeeper也会启动，solr�
 
 #### 同步数据库数据
 
+* 导包
+```
+导入 dist/solr-dataimporthandler-*.jar 两个jar包及下载mysql驱动包，放置在 server/solr-webapp/webapp/WEB-INF/lib 路径
+```
 
+* 修改配置文件
+添加数据库配置文件 data-config.xml
+```
+<dataConfig>
+    <dataSource type="JdbcDataSource"
+                driver="com.mysql.cj.jdbc.Driver"
+                url="jdbc:mysql://cdb-ilzz1jt1.gz.tencentcdb.com:10068/writing_helper?userSSL=true&amp;useUnicode=true&amp;characterEncoding=UTF8&amp;serverTimezone=UTC"
+                user="root"
+                password="Pan@1208"/>
+    <document>
+        <entity name="test_collection" pk="id"
+                query="select id,idiom,classify_id,description,derivation,content,ctime from tbl_idiom_info"
+                deltaImportQuery="select id,idiom,classify_id,description,derivation,content,ctime from tbl_idiom_info where id='${dataimporter.delta.id}'"
+                deltaQuery="select id,idiom,classify_id,description,derivation,content,ctime from tbl_idiom_info where ctime > '${dataimporter.last_index_time}'">
+            <field column="id" name="index" />
+            <field column="idiom" name="idiom" />
+            <field column="classify_id" name="classify_id" />
+            <field column="description" name="description" />
+            <field column="derivation" name="derivation" />
+            <field column="content" name="content" />
+            <field column="ctime" name="ctime" />
+        </entity>
+    </document>
+</dataConfig>
+```
+在solrconfig中添加配置
+```
+<requestHandler name="/dataimport"
+               class="org.apache.solr.handler.dataimport.DataImportHandler">
+ <lst name="defaults">
+   <str name="config">data-config.xml</str>
+ </lst>
+</requestHandler>
+```
+在manage-schame中添加配置
+```
+<field name="index" type="plong" indexed="true" stored="true" />
+<field name="idiom" type="text_tr" indexed="true" stored="true" />
+<field name="classify_id" type="text_tr" indexed="true" stored="true" />
+<field name="description" type="text_tr" indexed="true" stored="true" />
+<field name="derivation" type="text_tr" indexed="true" stored="true" />
+<field name="content" type="text_tr" indexed="true" stored="true" />
+<field name="ctime" type="string" indexed="true" stored="true" />
+```
+* 重启
 
 #### 添加插件
 * 添加拼音分词器
 
-
+```
+  <!-- ik分词器 -->
+    <fieldType name="text_ik" class="solr.TextField">
+      <analyzer type="index">
+          <tokenizer class="org.wltea.analyzer.lucene.IKTokenizerFactory" useSmart="false" conf="ik.conf"/>
+          <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+      <analyzer type="query">
+          <tokenizer class="org.wltea.analyzer.lucene.IKTokenizerFactory" useSmart="true" conf="ik.conf"/>
+          <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+```
 
 
 
