@@ -2,11 +2,21 @@
 
 ### 1、安装docker
 ####  docker文档
-* [docker的官方安装文档](https://docs.docker.com/engine/install/centos/)
-* [菜鸟教程](https://www.runoob.com/docker/docker-image-usage.html)
+* [Docker 安装文档](https://docs.docker.com/engine/install/centos/)
+* [Docker 菜鸟教程](https://www.runoob.com/docker/docker-image-usage.html)
+* [Docker 官方主页](https://www.docker.com)
+* [Docker 官方博客](https://blog.docker.com/)
+* [Docker 官方文档](https://docs.docker.com/)
+* [Docker Store](https://store.docker.com)
+* [Docker Cloud](https://cloud.docker.com)
+* [Docker Hub](https://hub.docker.com)
+* [Docker 的源代码仓库](https://github.com/moby/moby)
+* [Docker 发布版本历史](https://docs.docker.com/release-notes/)
+* [Docker 常见问题](https://docs.docker.com/engine/faq/)
+* [Docker 远端应用 API](https://docs.docker.com/develop/sdk/)
 
 ####  卸载docker
--- 官网方式，腾讯云服务器亲测不适用
+官网方式，腾讯云服务器亲测卸载失败，使用下面的指定删除方式成功
 ```shell script
  sudo yum remove docker \
                  docker-client \
@@ -247,30 +257,6 @@ docker pull nginx
     -t :分配一个伪终端
 ```
 
-
-####  docker资源
-```text
-    Docker 官方主页: https://www.docker.com
-    
-    Docker 官方博客: https://blog.docker.com/
-    
-    Docker 官方文档: https://docs.docker.com/
-    
-    Docker Store: https://store.docker.com
-    
-    Docker Cloud: https://cloud.docker.com
-    
-    Docker Hub: https://hub.docker.com
-    
-    Docker 的源代码仓库: https://github.com/moby/moby
-    
-    Docker 发布版本历史: https://docs.docker.com/release-notes/
-    
-    Docker 常见问题: https://docs.docker.com/engine/faq/
-    
-    Docker 远端应用 API: https://docs.docker.com/develop/sdk/
-```
-
 ####  docker国内镜像
 ```text
     阿里云的加速器：https://help.aliyun.com/document_detail/60750.html
@@ -386,3 +372,22 @@ docker pull nginx
 
 
 
+今天在对dockder容器重启后发现有两个镜像没有启动，于是使用以下命令查到docker镜像ID：
+docker ps -a
+
+
+使用一下命令对镜像从起：
+
+
+docker restart imageid
+
+
+在运行docker容器时可以加如下参数来保证每次docker服务重启后容器也自动重启：
+docker run 
+--restart=always
+ 
+如果已经启动了则可以使用如下命令：
+
+————————————————
+版权声明：本文为CSDN博主「zcczbq」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/qq_27575627/article/details/73470120
