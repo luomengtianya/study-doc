@@ -388,6 +388,5 @@ docker run
  
 如果已经启动了则可以使用如下命令：
 
-————————————————
-版权声明：本文为CSDN博主「zcczbq」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
-原文链接：https://blog.csdn.net/qq_27575627/article/details/73470120
+docker update --restart=always <CONTAINER ID>
+
