@@ -3,14 +3,18 @@
 ```
 ├── README.md
 ├── front
-│   └── npm
-│       └── npm发布自己的模块.md
+│   ├── npm
+│   │   └── npm发布自己的模块.md
+│   └── vue
+│       └── 问题及修复.md
 ├── resource
 │   └── 通用资源.md
+├── support
+│   └── shell
+│       └── shell.md
 └── tools
     ├── docker
-    │   ├── 01 安装docker.md
-    │   └── 02 Docker安装及使用mysql.md
+    │   └── docker.md
     ├── jdk
     │   └── jdk.md
     ├── jenkins
@@ -19,6 +23,8 @@
     │   ├── jenkins-03.png
     │   ├── jenkins-04.png
     │   └── jenkins.md
+    ├── kubernetes
+    │   └── kubernetes.md
     ├── maven
     │   └── maven.md
     └── solr
@@ -31,5 +37,6 @@
             ├── managed-schema
             ├── mysql-connector-java-8.0.21.jar
             └── solrconfig.xml
+
 
 ```
