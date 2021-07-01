@@ -40,3 +40,10 @@
             rpm -qa # 查看所有安装的软件包
 
     * 
+
+
+* 脚本示例
+    * 过滤注释配置
+```text
+cat redis.conf | grep -v "#" | grep -v "^$"
+```

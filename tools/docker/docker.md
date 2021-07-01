@@ -1,5 +1,3 @@
-[TOC]
-
 ### 1、安装docker
 ####  docker文档
 * [Docker 安装文档](https://docs.docker.com/engine/install/centos/)
@@ -173,7 +171,7 @@ docker pull nginx
  ```       
 * 导入镜像
 ```
-    docker
+    docker import <文件路径>  <容器名>
 ```
 * 设置镜像标签  
 ```shell script
@@ -186,7 +184,7 @@ docker pull nginx
     docker load 不能对载入的镜像重命名，而 docker import 可以为镜像指定新名称             
 ```        
 ####  管理容器
-* 进入容器(其中，ImageId 可通过执行 docker images 命令获取)
+* 启动并进入容器
  ```shell script   
     docker run -it ImageId /bin/bash
 ```       
@@ -211,23 +209,40 @@ docker pull nginx
 ```shell script
     vim Dockerfile
 ```
+* 打包需要运行的文件
+```text
+ GOOS=linux go build -mod vendor
+```
 * 按 i 切换至编辑模式，添加如下内容
 ```text
-    FROM tencentyun/nginx:v2  #声明基础镜像来源。
-    MAINTAINER DTSTACK #声明镜像拥有者。
-    RUN mkdir /dtstact # RUN 后面接容器运行前需要执行的命令，由于 Dockerfile 文件不能超过127行，因此当命令较多时建议写到脚本中执行。
-    ENTRYPOINT ping https://cloud.tencent.com/ #开机启动命令，此处最后一个命令需要是可在前台持续执行的命令，否则容器后台运行时会因为命令执行完而退出。
+    FROM alpine:latest  # 基础镜像
+    
+    RUN mkdir -p /data/service/blog/bin # 执行命令,每次执行都会多一层镜像，可用 && 合并执行命令
+    ADD blog /data/service/blog/bin  # 添加文件
+    WORKDIR  /data/service/blog  # 设置工作目录
+    
+    EXPOSE 8888  # 声明端口
+    
+    EXPOSE 8080
+    
+    CMD ./bin/blog # 
 ```
 * 按 Esc，输入 :wq，保存文件并返回
 
 * 执行以下命令，构建镜像
 ```shell script
-    docker build -t nginxos:v1 .  #.是 Dockerfile 文件的路径，不能忽略。         
+    docker build -t blog:v1 .  #.是 Dockerfile 文件的路径，不能忽略。         
 ```     
 * 执行以下命令，查看镜像是否创建成功
 ```shell script
     docker images         
-```      
+```    
+* 镜像启动失败"exec format error"
+```text
+mac os 启动错误
+standard_init_linux.go:190: exec user process caused "exec format error"
+如果出现以上错误是因为你的golang在build时没有指定为linux平台，因为Docker内核依赖于Linux开发的，所以在mac os启动Docker时还是使用Boot2Docker拖起的
+```  
 * 依次执行以下命令，运行容器并查看容器
 ```text
     docker run -d nginxos:v1         #后台运行容器。
@@ -270,6 +285,61 @@ docker pull nginx
     daocloud：https://www.daocloud.io/mirror#accelerator-doc（注册后使用）
 ```
 
+#### docker容器容器重启
+    * 启动时添加命令
+```text
+docker run --restart=always
+```
+   * 已启动的容器则更新启动命令
+```text
+docker update --restart=always <CONTAINER ID>
+```  
+  
+#### pull镜像失败
+`toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit
+` 
+
+这是因为从 2020-11-02 开始，官方的 Docker Hub 开始对 pull 请求加上了限制，限制为匿名用户（未登录），每分钟只能拉 100 次 image，登录的免费用户每分钟拉 200 次 镜像
+
+解决方式 
+
+```
+修改 /etc/docker/daemon.json 中的
+
+{
+  "registry-mirrors": ["https://ustc-edu-cn.mirror.aliyuncs.com"],
+}
+```
+但是此镜像也可能出现问题，对于腾询服务器，配置已经默认如下
+```
+ http://docker.oa.com:8080
+ http://csighub.tencentyun.com
+``` 
+只需要把  `http://docker.oa.com:8080` 去掉即可
+
+重启docker
+```text
+systemctl daemon-reload && systemctl restart docker
+```
+
+参考：
+
+https://cloud.tencent.com/developer/article/1759992 
+
+https://www.chenshaowen.com/blog/how-to-cross-the-limit-of-dockerhub.html  
+  
+  
+#### 问题
+   * redis启动失败
+```text
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+*** FATAL CONFIG FILE ERROR (Redis 6.0.8) ***
+Reading the configuration file, at line 341
+>>> 'set-proc-title yes'
+Bad directive or wrong number of arguments
+```
+这是环境变量冲突导致的，需要把redis相关的环境变量去除，则启动成功
+  
 ---
 ### 3、安装及使用镜像
 ####  安装Mysql
@@ -278,7 +348,7 @@ docker pull nginx
   * 到 [mysql镜像](https://hub.docker.com/_/mysql?tab=tags&page=1&ordering=last_updated) 查看镜像版本，然后`docker pull mysql:5.6.51`安装指定版本
 
 * 启动
-  * $ docker run -itd --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=Pan@2021 mysql:5.6.51
+  * $ docker run -itd --name mysql --restart=always -p 3306:3306 -e MYSQL_ROOT_PASSWORD=Pan@2021 mysql:5.6.51
 ```
     -p 3306:3306 ：映射容器服务的 3306 端口到宿主机的 3306 端口，外部主机可以直接通过 宿主机ip:3306 访问到 MySQL 的服务。
     MYSQL_ROOT_PASSWORD=Pan@2021：设置 MySQL 服务 root 用户的密码。
@@ -371,22 +441,4 @@ docker pull nginx
 
 
 
-
-今天在对dockder容器重启后发现有两个镜像没有启动，于是使用以下命令查到docker镜像ID：
-docker ps -a
-
-
-使用一下命令对镜像从起：
-
-
-docker restart imageid
-
-
-在运行docker容器时可以加如下参数来保证每次docker服务重启后容器也自动重启：
-docker run 
---restart=always
- 
-如果已经启动了则可以使用如下命令：
-
-docker update --restart=always <CONTAINER ID>
 
