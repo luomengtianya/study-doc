@@ -19,3 +19,19 @@
    ]
  }
 ```
+
+
+#### 当执行webpack-dev-server命令的时候就报 `Cannot find module 'webpack-cli/bin/config-yargs'`
+```text
+webpack和webpack-dev-server版本冲突导致的, webpack5以上用
+ "start": "webpack serve --open"
+而不是
+"start": "webpack-dev-serve --open"
+```
+
+
+
+
+
+
+
