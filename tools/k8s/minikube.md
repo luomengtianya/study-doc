@@ -131,6 +131,43 @@ minikube dashboard
 ❌  Exiting due to SVC_URL_TIMEOUT: http://127.0.0.1:37708/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/ is not accessible: Temporary Error: unexpected response code: 503
 ```
 
+
+#### 设置固定的访问端口
+* 使用kubectl的代理
+```shell
+kubectl proxy  --port=8088 --address='127.0.0.1' --accept-hosts='^.*'
+```
+这样就可以直接使用8088端口访问，但是只限于本机访问
+```text
+```text
+http://127.0.0.1:8088/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
+```
+```
+或使用
+```shell script
+kubectl proxy
+```
+这样就可以使用8001端口访问
+```text
+http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
+```
+
+
+```text
+http://127.0.0.1:9090/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
+```
+
+
+
+
+
+
+
+
+
+
+
+
 #### dashboard设置外网访问
 ```shell script
 kubectl -n kubernetes-dashboard edit service kubernetes-dashboard
