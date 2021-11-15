@@ -14,10 +14,18 @@ uname -m
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 ```
+使用阿里云的镜像
+```shell script
+curl -Lo minikube https://kubernetes.oss-cn-hangzhou.aliyuncs.com/minikube/releases/v1.23.1/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+```
 
 ### 启动minikube
 ```shell script
 minikube start
+```
+* 因为直接启动，会有一些网络的错误，所以指定网络启动
+```shell script
+minikube start --vm-driver=docker --registry-mirror=https://registry.docker-cn.com --image-mirror-country=cn --cni=flannel
 ```
 * 启动minikube不应该使用root账号，所以创建一个新用户
 ```shell script
@@ -122,23 +130,85 @@ minikube dashboard
 
 ❌  Exiting due to SVC_URL_TIMEOUT: http://127.0.0.1:37708/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/ is not accessible: Temporary Error: unexpected response code: 503
 ```
-先停止minikube
+
+#### dashboard设置外网访问
 ```shell script
-minikube stop
+kubectl -n kubernetes-dashboard edit service kubernetes-dashboard
 ```
-再删除现有虚拟机
+更改原文件type: ClusterIP 为type: NodePort后保存
+* 下一步获取nodeport对外开放的https端口
 ```shell script
-minikube delete -p minikube
-```
-再重新启动
-```shell script
-minikube start
+kubectl -n kubernetes-dashboard get service kubernetes-dashboard
 ```
 
+```sql
+[minikube@VM-16-12-centos root]$ minikube start
+😄  minikube v1.24.0 on Centos 7.5.1804 (amd64)
+❗  Both driver=docker and vm-driver=none have been set.
+
+    Since vm-driver is deprecated, minikube will default to driver=docker.
+
+    If vm-driver is set in the global config, please run "minikube config unset vm-driver" to resolve this warning.
+
+✨  Using the docker driver based on user configuration
+👍  Starting control plane node minikube in cluster minikube
+🚜  Pulling base image ...
+❗  minikube was unable to download gcr.io/k8s-minikube/kicbase:v0.0.28, but successfully downloaded docker.io/kicbase/stable:v0.0.28 as a fallback image
+🔥  Creating docker container (CPUs=2, Memory=2200MB) ...
+❗  This container is having trouble accessing https://k8s.gcr.io
+💡  To pull new external images, you may need to configure a proxy: https://minikube.sigs.k8s.io/docs/reference/networking/proxy/
+🐳  Preparing Kubernetes v1.22.3 on Docker 20.10.8 ...
+    ▪ Generating certificates and keys ...
+    ▪ Booting up control plane ...
+    ▪ Configuring RBAC rules ...
+🔎  Verifying Kubernetes components...
+    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+🌟  Enabled addons: default-storageclass, storage-provisioner
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+```
 
 
+#### 删除一个pod
+```text
+1、先删除pod
+
+2、再删除对应的deployment
+
+否则只是删除pod是不管用的，还会看到pod，因为deployment.yaml文件中定义了副本数量
 
 
+实例如下：
 
+删除pod
 
+[root@test2 ~]# kubectl get pod -n jenkins
+NAME                        READY     STATUS    RESTARTS   AGE
+jenkins2-8698b5449c-grbdm   1/1       Running   0          8s
+[root@test2 ~]# kubectl delete pod jenkins2-8698b5449c-grbdm -n jenkins
+pod "jenkins2-8698b5449c-grbdm" deleted
 
+查看pod仍然存储
+
+[root@test2 ~]# kubectl get pod -n jenkins
+NAME                        READY     STATUS    RESTARTS   AGE
+jenkins2-8698b5449c-dbqqb   1/1       Running   0          8s
+[root@test2 ~]# 
+
+删除deployment
+
+[root@test2 ~]# kubectl get deployment -n jenkins
+NAME       DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+jenkins2   1         1         1            1           17h
+[root@test2 ~]# kubectl delete deployment jenkins2 -n jenkins
+
+再次查看pod消失
+
+deployment.extensions "jenkins2" deleted
+[root@test2 ~]# kubectl get deployment -n jenkins
+No resources found.
+[root@test2 ~]# 
+[root@test2 ~]# kubectl get pod -n jenkins
+No resources found.
+```
+
+kubectl proxy  --port=8088 --address='49.235.198.77' --accept-hosts='^.*'
