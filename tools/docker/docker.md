@@ -432,7 +432,11 @@ Bad directive or wrong number of arguments
     redis-server /etc/redis/redis.conf  以配置文件启动redis，加载容器内的conf文件，最终找到的是挂载的目录/usr/local/docker/redis.conf
 ```
 
-
+* docker的overlay2文件夹太大
+```shell script
+docker system prune
+```
+命令可以用于清理磁盘，删除关闭的容器、无用的数据卷和网络，以及dangling镜像(即无tag的镜像)
 
 
 

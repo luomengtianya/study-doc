@@ -25,7 +25,7 @@ minikube start
 ```
 * 因为直接启动，会有一些网络的错误，所以指定网络启动
 ```shell script
-minikube start --vm-driver=docker --registry-mirror=https://registry.docker-cn.com --image-mirror-country=cn --cni=flannel
+minikube start --driver=docker --registry-mirror=https://registry.docker-cn.com --image-mirror-country=cn --cni=flannel
 ```
 * 启动minikube不应该使用root账号，所以创建一个新用户
 ```shell script
@@ -70,8 +70,16 @@ minikube config set driver docker
 ```
 这是因为minikube没有docker连接的权限，需要把用户添加到docker组中
 ```text
-sudo gpasswd -a ${USER} docker
+sudo usermod -aG docker $USER && newgrp docker
 ```
+如果是使用 yum install docker安装的docker，默认没有docker用户，则创建一个docker用户
+```shell script
+groupadd docker
+```
+再次把minikube导入docker组中
+若是切换用户执行命令`docker images`还是报权限错误，切换到root下重启docker即可
+
+
 可以使用docker version查询，未显示错误信息则表示成功了
 
 * 查看组数据
@@ -249,3 +257,19 @@ No resources found.
 ```
 
 kubectl proxy  --port=8088 --address='49.235.198.77' --accept-hosts='^.*'
+
+
+
+13416139728/yi067221
+18810496240   1234qwer
+10010015
+
+
+@Jeff提供了完美的答案，为新手提供了更多提示。
+
+使用@Jeff的脚本启动代理，默认情况下，它将在'0.0.0.0:8001'上打开代理。
+
+kubectl proxy --address='0.0.0.0' --disable-filter=true
+通过以下链接访问仪表板：
+
+curl http://your_api_server_ip:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
