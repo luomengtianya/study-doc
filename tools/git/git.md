@@ -44,7 +44,3 @@ git branch --set-upstream-to=origin/master(远程分支) master(本地分支)
 
 
 
-
-智启课堂 - P005M000C002B002 - 智启AI案例社区功能 - 基础功能 - 新增自注册和AI案例社区功能 
-
-

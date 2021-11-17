@@ -1,65 +1,193 @@
-### k8s文档
-[部署文档](https://feisky.gitbooks.io/kubernetes/content/deploy/single.html)
-[部署文档-中文](https://kubernetes.io/zh/docs/tasks/tools/)
+#### 什么是minikube
+minikube是本地Kubernetes，注重于降低学习难度以及快速部署Kubernetes，与其相似的还有 [kind](https://kind.sigs.k8s.io/docs/user/quick-start/) 
 
-## 单机版k8s[minikube](https://minikube.sigs.k8s.io/docs/start/)
+#### 学习文档
+[minikube部署文档](https://minikube.sigs.k8s.io/docs/start/) 
 
-### 查看linux紫铜架构
-```shell script
-uname -m
-```
+[kubectl安装文档](https://kubernetes.io/zh/docs/tasks/tools/) 
 
-### 导入minikube
+[driver](https://minikube.sigs.k8s.io/docs/drivers/)
+
+[网络插件](https://kubernetes.io/zh/docs/concepts/cluster-administration/networking/#how-to-implement-the-kubernetes-networking-model)
+
+#### 部署流程
+* 在文档中按照自己的机器配置生成minikube的安装命令，并执行，如
 ```shell script
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 ```
-使用阿里云的镜像
+
+* 也可以选择安装阿里云的镜像
 ```shell script
 curl -Lo minikube https://kubernetes.oss-cn-hangzhou.aliyuncs.com/minikube/releases/v1.23.1/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
 ```
 
-### 启动minikube
-```shell script
-minikube start
-```
-* 因为直接启动，会有一些网络的错误，所以指定网络启动
-```shell script
-minikube start --driver=docker --registry-mirror=https://registry.docker-cn.com --image-mirror-country=cn --cni=flannel
-```
-* 启动minikube不应该使用root账号，所以创建一个新用户
-```shell script
-useradd -m minikube
-passwd minikube 
-```
-* 删除用户
-```shell script
-userdel minikube
-```
-
-* 用新用户启动还报错，可能是需要的驱动未安装完成 [驱动](https://minikube.sigs.k8s.io/docs/drivers/)
+* 按照文档步骤，接下来就是执行`minikube start`启动minkube，但是我们不急，先执行`minikube start --help`查看一下启动文档
 ```text
-😄  minikube v1.22.0 on Centos 7.2 (amd64)
-👎  Unable to pick a default driver. Here is what was considered, in preference order:
-    ▪ docker: Not healthy: "docker version --format {{.Server.Os}}-{{.Server.Version}}" exit status 1: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.26/version: dial unix /var/run/docker.sock: connect: permission denied
-    ▪ docker: Suggestion: Add your user to the 'docker' group: 'sudo usermod -aG docker $USER && newgrp docker' <https://docs.docker.com/engine/install/linux-postinstall/>
-    ▪ kvm2: Not installed: exec: "virsh": executable file not found in $PATH
-    ▪ podman: Not installed: exec: "podman": executable file not found in $PATH
-    ▪ vmware: Not installed: exec: "docker-machine-driver-vmware": executable file not found in $PATH
-    ▪ virtualbox: Not installed: unable to find VBoxManage in $PATH
+Starts a local Kubernetes cluster
 
-❌  Exiting due to DRV_NOT_HEALTHY: Found driver(s) but none were healthy. See above for suggestions how to fix installed drivers.
-```
-* 使用docker启动minikube
-```shell script
-minikube start --driver=docker
-```
+Options:
+      --addons=[]: Enable addons. see `minikube addons list` for a list of valid addon names.
+      --apiserver-ips=[]: A set of apiserver IP Addresses which are used in the generated certificate for kubernetes.
+This can be used if you want to make the apiserver available from outside the machine
+      --apiserver-name='minikubeCA': The authoritative apiserver hostname for apiserver certificates and connectivity.
+This can be used if you want to make the apiserver available from outside the machine
+      --apiserver-names=[]: A set of apiserver names which are used in the generated certificate for kubernetes.  This
+can be used if you want to make the apiserver available from outside the machine
+      --apiserver-port=8443: The apiserver listening port
+      --auto-update-drivers=true: If set, automatically updates drivers to the latest version. Defaults to true.
 
-* 设置docker为minikube默认启动驱动
+--base-image='gcr.io/k8s-minikube/kicbase:v0.0.27@sha256:89b4738ee74ba28684676e176752277f0db46f57d27f0e08c3feec89311e22de':
+The base image to use for docker/podman drivers. Intended for local development.
+      --cache-images=true: If true, cache docker images for the current bootstrapper and load them into the machine.
+Always false with --driver=none.
+      --cni='': CNI plug-in to use. Valid options: auto, bridge, calico, cilium, flannel, kindnet, or path to a CNI
+manifest (default: auto)
+      --container-runtime='docker': The container runtime to be used (docker, cri-o, containerd).
+      --cpus='2': Number of CPUs allocated to Kubernetes. Use "max" to use the maximum number of CPUs.
+      --cri-socket='': The cri socket path to be used.
+      --delete-on-failure=false: If set, delete the current cluster if start fails and try again. Defaults to false.
+      --disable-driver-mounts=false: Disables the filesystem mounts provided by the hypervisors
+      --disk-size='20000mb': Disk size allocated to the minikube VM (format: <number>[<unit>], where unit = b, k, m or
+g).
+      --dns-domain='cluster.local': The cluster dns domain name used in the Kubernetes cluster
+      --dns-proxy=false: Enable proxy for NAT DNS requests (virtualbox driver only)
+      --docker-env=[]: Environment variables to pass to the Docker daemon. (format: key=value)
+      --docker-opt=[]: Specify arbitrary flags to pass to the Docker daemon. (format: key=value)
+      --download-only=false: If true, only download and cache files for later use - don't install or start anything.
+      --driver='': Driver is one of: virtualbox, vmwarefusion, kvm2, vmware, none, docker, podman, ssh (defaults to
+auto-detect)
+      --dry-run=false: dry-run mode. Validates configuration, but does not mutate system state
+      --embed-certs=false: if true, will embed the certs in kubeconfig.
+      --enable-default-cni=false: DEPRECATED: Replaced by --cni=bridge
+      --extra-config=: A set of key=value pairs that describe configuration that may be passed to different components.
+                The key should be '.' separated, and the first part before the dot is the component to apply the configuration to.
+                Valid components are: kubelet, kubeadm, apiserver, controller-manager, etcd, proxy, scheduler
+                Valid kubeadm parameters: ignore-preflight-errors, dry-run, kubeconfig, kubeconfig-dir, node-name, cri-socket,
+experimental-upload-certs, certificate-key, rootfs, skip-phases, pod-network-cidr
+      --extra-disks=0: Number of extra disks created and attached to the minikube VM (currently only implemented for
+hyperkit and kvm2 drivers)
+      --feature-gates='': A set of key=value pairs that describe feature gates for alpha/experimental features.
+      --force=false: Force minikube to perform possibly dangerous operations
+      --force-systemd=false: If set, force the container runtime to use systemd as cgroup manager. Defaults to false.
+      --host-dns-resolver=true: Enable host resolver for NAT DNS requests (virtualbox driver only)
+      --host-only-cidr='192.168.99.1/24': The CIDR to be used for the minikube VM (virtualbox driver only)
+      --host-only-nic-type='virtio': NIC Type used for host only network. One of Am79C970A, Am79C973, 82540EM, 82543GC,
+82545EM, or virtio (virtualbox driver only)
+      --hyperkit-vpnkit-sock='': Location of the VPNKit socket used for networking. If empty, disables Hyperkit
+VPNKitSock, if 'auto' uses Docker for Mac VPNKit connection, otherwise uses the specified VSock (hyperkit driver only)
+      --hyperkit-vsock-ports=[]: List of guest VSock ports that should be exposed as sockets on the host (hyperkit
+driver only)
+      --hyperv-external-adapter='': External Adapter on which external switch will be created if no external switch is
+found. (hyperv driver only)
+      --hyperv-use-external-switch=false: Whether to use external switch over Default Switch if virtual switch not
+explicitly specified. (hyperv driver only)
+      --hyperv-virtual-switch='': The hyperv virtual switch name. Defaults to first found. (hyperv driver only)
+      --image-mirror-country='cn': Country code of the image mirror to be used. Leave empty to use the global one. For
+Chinese mainland users, set it to cn.
+      --image-repository='': Alternative image repository to pull docker images from. This can be used when you have
+limited access to gcr.io. Set it to "auto" to let minikube decide one for you. For Chinese mainland users, you may use
+local gcr.io mirrors such as registry.cn-hangzhou.aliyuncs.com/google_containers
+      --insecure-registry=[]: Insecure Docker registries to pass to the Docker daemon.  The default service CIDR range
+will automatically be added.
+      --install-addons=true: If set, install addons. Defaults to true.
+      --interactive=true: Allow user prompts for more information
+
+--iso-url=[https://storage.googleapis.com/minikube/iso/minikube-v1.23.1.iso,https://github.com/kubernetes/minikube/releases/download/v1.23.1/minikube-v1.23.1.iso,https://kubernetes.oss-cn-hangzhou.aliyuncs.com/minikube/iso/minikube-v1.23.1.iso]:
+Locations to fetch the minikube ISO from.
+      --keep-context=false: This will keep the existing kubectl context and will create a minikube context.
+      --kubernetes-version='': The Kubernetes version that the minikube VM will use (ex: v1.2.3, 'stable' for v1.22.1,
+'latest' for v1.22.2-rc.0). Defaults to 'stable'.
+      --kvm-gpu=false: Enable experimental NVIDIA GPU support in minikube
+      --kvm-hidden=false: Hide the hypervisor signature from the guest in minikube (kvm2 driver only)
+      --kvm-network='default': The KVM default network name. (kvm2 driver only)
+      --kvm-numa-count=1: Simulate numa node count in minikube, supported numa node count range is 1-8 (kvm2 driver
+only)
+      --kvm-qemu-uri='qemu:///system': The KVM QEMU connection URI. (kvm2 driver only)
+      --listen-address='': IP Address to use to expose ports (docker and podman driver only)
+      --memory='': Amount of RAM to allocate to Kubernetes (format: <number>[<unit>], where unit = b, k, m or g). Use
+"max" to use the maximum amount of memory.
+      --mount=false: This will start the mount daemon and automatically mount files into minikube.
+      --mount-string='/root:/minikube-host': The argument to pass the minikube mount command on start.
+      --namespace='default': The named space to activate after start
+      --nat-nic-type='virtio': NIC Type used for nat network. One of Am79C970A, Am79C973, 82540EM, 82543GC, 82545EM, or
+virtio (virtualbox driver only)
+      --native-ssh=true: Use native Golang SSH client (default true). Set to 'false' to use the command line 'ssh'
+command when accessing the docker machine. Useful for the machine drivers when they will not start with 'Waiting for
+SSH'.
+      --network='': network to run minikube with. Now it is used by docker/podman and KVM drivers. If left empty,
+minikube will create a new network.
+      --network-plugin='': Kubelet network plug-in to use (default: auto)
+      --nfs-share=[]: Local folders to share with Guest via NFS mounts (hyperkit driver only)
+      --nfs-shares-root='/nfsshares': Where to root the NFS Shares, defaults to /nfsshares (hyperkit driver only)
+      --no-vtx-check=false: Disable checking for the availability of hardware virtualization before the vm is started
+(virtualbox driver only)
+  -n, --nodes=1: The number of nodes to spin up. Defaults to 1.
+  -o, --output='text': Format to print stdout in. Options include: [text,json]
+      --ports=[]: List of ports that should be exposed (docker and podman driver only)
+      --preload=true: If set, download tarball of preloaded images if available to improve start time. Defaults to true.
+      --registry-mirror=[]: Registry mirrors to pass to the Docker daemon
+      --service-cluster-ip-range='10.96.0.0/12': The CIDR to be used for service cluster IPs.
+      --ssh-ip-address='': IP address (ssh driver only)
+      --ssh-key='': SSH key (ssh driver only)
+      --ssh-port=22: SSH port (ssh driver only)
+      --ssh-user='root': SSH user (ssh driver only)
+      --trace='': Send trace events. Options include: [gcp]
+      --uuid='': Provide VM UUID to restore MAC address (hyperkit driver only)
+      --vm=false: Filter to use only VM Drivers
+      --vm-driver='': DEPRECATED, use `driver` instead.
+      --wait=[apiserver,system_pods]: comma separated list of Kubernetes components to verify and wait for after
+starting a cluster. defaults to "apiserver,system_pods", available options:
+"apiserver,system_pods,default_sa,apps_running,node_ready,kubelet" . other acceptable values are 'all' or 'none', 'true'
+and 'false'
+      --wait-timeout=6m0s: max time to wait per Kubernetes or host to be healthy.
+
+Usage:
+  minikube start [flags] [options]
+
+Use "minikube options" for a list of global command-line options (applies to all commands).
+```
+输出的内容包括一些默认配置和特殊事项，如
+```text
+      --image-mirror-country='cn': Country code of the image mirror to be used. Leave empty to use the global one. For
+Chinese mainland users, set it to cn.
+      --image-repository='': Alternative image repository to pull docker images from. This can be used when you have
+limited access to gcr.io. Set it to "auto" to let minikube decide one for you. For Chinese mainland users, you may use
+local gcr.io mirrors such as registry.cn-hangzhou.aliyuncs.com/google_containers
+```
+minikube所需的镜像在拉取时，要求网络能够访问k8s.gcr.io。而此地址属于著名的404公司，在国内是无法访问的。而没有代理网络时，则需要按照提示添加启动配置
+
+* 另外，minikube在启动时需要指定 [驱动](https://minikube.sigs.k8s.io/docs/drivers/) 我们这次选择按照docker的方式启动，执行命令
+```text
+minikube start --driver=docker --image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers' --image-mirror-country=cn --cni=flannel
+```
+当然，我们也可以指定默认的驱动
 ```shell script
 minikube config set driver docker
 ```
-* 启动时还是报错
+或者使用阿里云下载的minikube镜像时，不需要指定`--image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers`，执行命令
+```shell script
+minikube start --registry-mirror=https://registry.docker-cn.com --image-mirror-country=cn --cni=flannel
+```
+其中，两个指令都有 `--cni=flannel` 这个参数，这是给minikube添加容器间的 [网络插件](https://kubernetes.io/zh/docs/concepts/cluster-administration/networking/#how-to-implement-the-kubernetes-networking-model) 为接下来的 `dashboard` 启动做准备 
+
+* 按照上述命令启动，会出现启动异常，报
+```text
+😄  minikube v1.23.1 on Centos 7.5.1804 (amd64)
+✨  Automatically selected the docker driver. Other choices: none, ssh
+💨  For improved Docker performance, Upgrade Docker to a newer version (Minimum recommended version is 18.09.0)
+🛑  The "docker" driver should not be used with root privileges.
+💡  If you are running minikube within a VM, consider using --driver=none:
+📘    https://minikube.sigs.k8s.io/docs/reference/drivers/none/
+
+❌  Exiting due to DRV_AS_ROOT: The "docker" driver should not be used with root privileges.
+```
+这是因为使用docker驱动启动时，不能使用root用户直接启动，所以需要创建一个用户
+```shell script
+useradd minikube
+```
+
+* 切换到minikube `su minikube` 执行命令还是会报错
 ```text
 😄  minikube v1.22.0 on Centos 7.2 (amd64)
 ✨  Using the docker driver based on user configuration
@@ -68,26 +196,17 @@ minikube config set driver docker
 💡  Suggestion: Add your user to the 'docker' group: 'sudo usermod -aG docker $USER && newgrp docker'
 📘  Documentation: https://docs.docker.com/engine/install/linux-postinstall/
 ```
-这是因为minikube没有docker连接的权限，需要把用户添加到docker组中
-```text
-sudo usermod -aG docker $USER && newgrp docker
+这是应为用户minikube没有在docker组，没有docker权限导致的，我们可以把用户添加到docker组，次操作需要在root用户下进行
+```shell script
+sudo usermod -aG docker minikube && newgrp docker
 ```
-如果是使用 yum install docker安装的docker，默认没有docker用户，则创建一个docker用户
+有可能会报docke组不存在，因为直接安装docker `yum install docker` 不会默认创建docker组，则自己建立一个
 ```shell script
 groupadd docker
 ```
-再次把minikube导入docker组中
-若是切换用户执行命令`docker images`还是报权限错误，切换到root下重启docker即可
+再次添加minikube到docker组，重启docker即可
 
-
-可以使用docker version查询，未显示错误信息则表示成功了
-
-* 查看组数据
-```shell script
-cat /etc/group
-```
-
-* 再次启动，加载一段时间后成功
+* 再次切换minikube并执行启动命令，会出现
 ```text
 😄  minikube v1.22.0 on Centos 7.2 (amd64)
 ✨  Using the docker driver based on user configuration
@@ -107,169 +226,108 @@ cat /etc/group
 🌟  Enabled addons: storage-provisioner, default-storageclass
 🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
 ```
+此时，minikube已经启动成功 
 
-### 查看minikube信息
-```shell script
-kubectl get po -A
-或
+我们可以使用命令查看启动的pod
+```
 minikube kubectl -- get po -A
 ```
-显示信息
+如果我们已经安装里kubectl，则可以直接使用 [安装文档](https://kubernetes.io/zh/docs/tasks/tools/)
 ```text
-NAMESPACE     NAME                               READY   STATUS    RESTARTS   AGE
-kube-system   coredns-558bd4d5db-xktpv           0/1     Running   0          35s
-kube-system   etcd-minikube                      1/1     Running   0          42s
-kube-system   kube-apiserver-minikube            1/1     Running   0          42s
-kube-system   kube-controller-manager-minikube   1/1     Running   0          42s
-kube-system   kube-proxy-sm74g                   1/1     Running   0          35s
-kube-system   kube-scheduler-minikube            1/1     Running   0          42s
-kube-system   storage-provisioner                1/1     Running   1          47s
+kubectl get pods -A
+```
+执行后会出现以下内容
+```text
+NAMESPACE              NAME                                         READY   STATUS    RESTARTS      AGE
+kube-system            coredns-7d89d9b6b8-tlt54                     1/1     Running   0             18h
+kube-system            etcd-minikube                                1/1     Running   0             18h
+kube-system            kube-apiserver-minikube                      1/1     Running   0             18h
+kube-system            kube-controller-manager-minikube             1/1     Running   0             18h
+kube-system            kube-flannel-ds-amd64-wmvct                  1/1     Running   0             18h
+kube-system            kube-proxy-mgdvn                             1/1     Running   0             18h
+kube-system            kube-scheduler-minikube                      1/1     Running   0             18h
+kube-system            storage-provisioner                          1/1     Running   1 (18h ago)   18h
 ```
 
-* 启动minikube界面数据
-```shell script
-minikube dashboard
-```
-* 启动卡顿很久后报错
+* 执行命令 `minikube dashboard` 一段时间后会出现
 ```text
 🤔  Verifying dashboard health ...
 🚀  Launching proxy ...
 🤔  Verifying proxy health ...
-
-❌  Exiting due to SVC_URL_TIMEOUT: http://127.0.0.1:37708/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/ is not accessible: Temporary Error: unexpected response code: 503
+🎉  Opening http://127.0.0.1:40104/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/ in your default browser...
+👉  http://127.0.0.1:40104/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
 ```
+然后会一直停顿在这里，这是启动成功了，如果机器有可视化界面，我们直接在浏览器中打开 `http://127.0.0.1:40104/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/`
+就可以看到kubernetes操作界面
 
-
-#### 设置固定的访问端口
-* 使用kubectl的代理
-```shell
-kubectl proxy  --port=8088 --address='127.0.0.1' --accept-hosts='^.*'
-```
-这样就可以直接使用8088端口访问，但是只限于本机访问
+如果只能命令行操作，我们再打开一个窗口，使用
 ```text
+curl http://127.0.0.1:40104/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
+```
+执行成功会返回
 ```text
-http://127.0.0.1:8088/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
+<!--
+Copyright 2017 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--><!DOCTYPE html><html lang="en"><head>
+  <meta charset="utf-8">
+  <title>Kubernetes Dashboard</title>
+  <link rel="icon" type="image/png" href="assets/images/kubernetes-logo.png">
+  <meta name="viewport" content="width=device-width">
+<style>body,html{height:100%;margin:0;}</style><link rel="stylesheet" href="styles.f66c655a05a456ae30f8.css" media="print" onload="this.media=&#39;all&#39;"><noscript><link rel="stylesheet" href="styles.f66c655a05a456ae30f8.css"></noscript></head>
+
+<body>
+  <kd-root></kd-root>
+<script src="runtime.fb7fb9bb628f2208f9e9.js" defer=""></script><script src="polyfills.49b2d5227916caf47237.js" defer=""></script><script src="scripts.72d8a72221658f3278d3.js" defer=""></script><script src="en.main.0bf75cd6c71fc0efa001.js" defer=""></script>
+
+
+</body></html>
 ```
+
+* 若是执行 `minikube dashboard` 的界面关闭或者断开监听，上诉地址也会不能再被访问，我们执行 `minikube kubectl -- get po -A`
+```shell script
+NAMESPACE              NAME                                         READY   STATUS    RESTARTS      AGE
+kube-system            coredns-7d89d9b6b8-tlt54                     1/1     Running   0             18h
+kube-system            etcd-minikube                                1/1     Running   0             18h
+kube-system            kube-apiserver-minikube                      1/1     Running   0             18h
+kube-system            kube-controller-manager-minikube             1/1     Running   0             18h
+kube-system            kube-flannel-ds-amd64-wmvct                  1/1     Running   0             18h
+kube-system            kube-proxy-mgdvn                             1/1     Running   0             18h
+kube-system            kube-scheduler-minikube                      1/1     Running   0             18h
+kube-system            storage-provisioner                          1/1     Running   1 (18h ago)   18h
+kubernetes-dashboard   dashboard-metrics-scraper-758548f849-hkg5r   1/1     Running   0             39s
+kubernetes-dashboard   kubernetes-dashboard-586fb768c4-z7lpd        1/1     Running   0             39s
 ```
-或使用
+可以看到 dashboard 其实还在运行中，不能访问的原因是端口没有正确映射到容器中，我们可以通过代理，固化监听端口
 ```shell script
 kubectl proxy
 ```
-这样就可以使用8001端口访问
-```text
-http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
-```
-
-
-```text
-http://127.0.0.1:9090/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
-```
-
-
-
-
-
-
-
-
-
-
-
-
-#### dashboard设置外网访问
+会出现
 ```shell script
-kubectl -n kubernetes-dashboard edit service kubernetes-dashboard
+Starting to serve on 127.0.0.1:8001
 ```
-更改原文件type: ClusterIP 为type: NodePort后保存
-* 下一步获取nodeport对外开放的https端口
+这个也会一直监听，我们把 8001 端口替换上次 dashboard 的界面，会发现此地址可以再次被访问;此方式是固定 8001 端口，我们也可以指定端口
 ```shell script
-kubectl -n kubernetes-dashboard get service kubernetes-dashboard
+kubectl proxy  --port=8088 --address='127.0.0.1' --accept-hosts='^.*'
+```
+这个监听退出也会出现问题，我们可以使用后端运行的方式启动
+```shell script
+nohup kubectl proxy  --port=8088 --address='127.0.0.1' --accept-hosts='^.*' &
 ```
 
-```sql
-[minikube@VM-16-12-centos root]$ minikube start
-😄  minikube v1.24.0 on Centos 7.5.1804 (amd64)
-❗  Both driver=docker and vm-driver=none have been set.
+* 启动代理需要在启动 minikube 的用户下执行，不然会出现网络问题
 
-    Since vm-driver is deprecated, minikube will default to driver=docker.
-
-    If vm-driver is set in the global config, please run "minikube config unset vm-driver" to resolve this warning.
-
-✨  Using the docker driver based on user configuration
-👍  Starting control plane node minikube in cluster minikube
-🚜  Pulling base image ...
-❗  minikube was unable to download gcr.io/k8s-minikube/kicbase:v0.0.28, but successfully downloaded docker.io/kicbase/stable:v0.0.28 as a fallback image
-🔥  Creating docker container (CPUs=2, Memory=2200MB) ...
-❗  This container is having trouble accessing https://k8s.gcr.io
-💡  To pull new external images, you may need to configure a proxy: https://minikube.sigs.k8s.io/docs/reference/networking/proxy/
-🐳  Preparing Kubernetes v1.22.3 on Docker 20.10.8 ...
-    ▪ Generating certificates and keys ...
-    ▪ Booting up control plane ...
-    ▪ Configuring RBAC rules ...
-🔎  Verifying Kubernetes components...
-    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
-🌟  Enabled addons: default-storageclass, storage-provisioner
-🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
-```
+* 此方式开启的 dashboard 只能在本机访问，不能进行外部访问，若是想外部访问，还需要配置转发等其它操作
 
 
-#### 删除一个pod
-```text
-1、先删除pod
-
-2、再删除对应的deployment
-
-否则只是删除pod是不管用的，还会看到pod，因为deployment.yaml文件中定义了副本数量
-
-
-实例如下：
-
-删除pod
-
-[root@test2 ~]# kubectl get pod -n jenkins
-NAME                        READY     STATUS    RESTARTS   AGE
-jenkins2-8698b5449c-grbdm   1/1       Running   0          8s
-[root@test2 ~]# kubectl delete pod jenkins2-8698b5449c-grbdm -n jenkins
-pod "jenkins2-8698b5449c-grbdm" deleted
-
-查看pod仍然存储
-
-[root@test2 ~]# kubectl get pod -n jenkins
-NAME                        READY     STATUS    RESTARTS   AGE
-jenkins2-8698b5449c-dbqqb   1/1       Running   0          8s
-[root@test2 ~]# 
-
-删除deployment
-
-[root@test2 ~]# kubectl get deployment -n jenkins
-NAME       DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-jenkins2   1         1         1            1           17h
-[root@test2 ~]# kubectl delete deployment jenkins2 -n jenkins
-
-再次查看pod消失
-
-deployment.extensions "jenkins2" deleted
-[root@test2 ~]# kubectl get deployment -n jenkins
-No resources found.
-[root@test2 ~]# 
-[root@test2 ~]# kubectl get pod -n jenkins
-No resources found.
-```
-
-kubectl proxy  --port=8088 --address='49.235.198.77' --accept-hosts='^.*'
-
-
-
-13416139728/yi067221
-18810496240   1234qwer
-10010015
-
-
-@Jeff提供了完美的答案，为新手提供了更多提示。
-
-使用@Jeff的脚本启动代理，默认情况下，它将在'0.0.0.0:8001'上打开代理。
-
-kubectl proxy --address='0.0.0.0' --disable-filter=true
-通过以下链接访问仪表板：
-
-curl http://your_api_server_ip:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/

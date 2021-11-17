@@ -166,7 +166,7 @@ docker pull nginx
 ```        
 * 导出镜像
 ```shell script
-    docker export 1e560fca3906 > msyql.tar
+    docker export -o mysql-`date +%Y%m%d`.tar a404c6c174a2
     docker save -o collect.tar mysql redis 
  ```       
 * 导入镜像
