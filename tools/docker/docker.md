@@ -24,7 +24,7 @@
                  docker-latest-logrotate \
                  docker-logrotate \
                  docker-engine
-```    
+```
 注：运行中的docker是不能用此方法卸载的，卸载前先查看docker的运行状态
 ```shell script
 systemctl status docker
@@ -83,7 +83,7 @@ docker info
 ### 2、使用docker
 ####  命令大全
    * 容器生命周期管理
-   
+
 ```shell script
     run
     start/stop/restart
@@ -92,8 +92,8 @@ docker info
     pause/unpause
     create
     exec
-```   
-      
+```
+
    * 容器操作
 ```text   
     ps
@@ -105,20 +105,20 @@ docker info
     wait
     export
     port
-```           
+```
    * 容器rootfs命令
 ```text       
     commit
     cp
     diff
-```           
+```
    * 镜像仓库
 ```text   
     login
     pull
     push
     search
-```           
+```
    * 本地镜像管理
 ```text   
     images
@@ -138,37 +138,37 @@ docker info
 * 运行 Docker 守护进程
 ```shell script    
     systemctl start docker
-```       
+```
 * 停止 Docker 守护进程
 ```shell script    
     systemctl stop docker
-```        
+```
 * 重启 Docker 守护进程
 ```shell script    
     systemctl restart docker            
-```       
-        
+```
+
  #### 管理镜像          
-  
+
 docker pull nginx 
     
 * 修改标签：您可以修改镜像标签以便记忆区分
 ```shell script    
     docker tag docker.io/nginx:latest tencentyun/nginx:v1
-```        
+```
 * 查看已有镜像
 ```shell script    
     docker images
-```       
+```
 * 强制删除镜像
 ```shell script    
     docker rmi -f tencentyun/nginx:v1         
-```        
+```
 * 导出镜像
 ```shell script
     docker export -o mysql-`date +%Y%m%d`.tar a404c6c174a2
     docker save -o collect.tar mysql redis 
- ```       
+```
 * 导入镜像
 ```
     docker import <文件路径>  <容器名>
@@ -182,26 +182,26 @@ docker pull nginx
     docker save 保存的是镜像（image），docker export 保存的是容器（container）
     docker load 用来载入镜像包，docker import 用来载入容器包，但两者都会恢复为镜像
     docker load 不能对载入的镜像重命名，而 docker import 可以为镜像指定新名称             
-```        
+```
 ####  管理容器
 * 启动并进入容器
  ```shell script   
     docker run -it ImageId /bin/bash
-```       
+ ```
 * 退出容器：执行 exit 命令，退出当前容器
-    
+  
 * 进入后台运行的容器
 ```shell script    
     docker exec -it 容器 ID /bin/bash
-```        
+```
 * 将容器做成镜像
 ```shell script    
     docker commit <容器 ID 或容器名> [<仓库名>[:<标签>]]            
-```        
+```
 * 进入后台运行的容器
 ```shell script    
     docker exec -it 容器 ID /bin/bash                        
-```             
+```
 
 
 ####  制作镜像
@@ -232,17 +232,17 @@ docker pull nginx
 * 执行以下命令，构建镜像
 ```shell script
     docker build -t blog:v1 .  #.是 Dockerfile 文件的路径，不能忽略。         
-```     
+```
 * 执行以下命令，查看镜像是否创建成功
 ```shell script
     docker images         
-```    
+```
 * 镜像启动失败"exec format error"
 ```text
 mac os 启动错误
 standard_init_linux.go:190: exec user process caused "exec format error"
 如果出现以上错误是因为你的golang在build时没有指定为linux平台，因为Docker内核依赖于Linux开发的，所以在mac os启动Docker时还是使用Boot2Docker拖起的
-```  
+```
 * 依次执行以下命令，运行容器并查看容器
 ```text
     docker run -d nginxos:v1         #后台运行容器。
@@ -293,8 +293,8 @@ docker run --restart=always
    * 已启动的容器则更新启动命令
 ```text
 docker update --restart=always <CONTAINER ID>
-```  
-  
+```
+
 #### pull镜像失败
 `toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit
 ` 
@@ -314,7 +314,7 @@ docker update --restart=always <CONTAINER ID>
 ```
  http://docker.oa.com:8080
  http://csighub.tencentyun.com
-``` 
+```
 只需要把  `http://docker.oa.com:8080` 去掉即可
 
 重启docker
@@ -327,8 +327,8 @@ systemctl daemon-reload && systemctl restart docker
 https://cloud.tencent.com/developer/article/1759992 
 
 https://www.chenshaowen.com/blog/how-to-cross-the-limit-of-dockerhub.html  
-  
-  
+
+
 #### 问题
    * redis启动失败
 ```text
@@ -339,7 +339,7 @@ Reading the configuration file, at line 341
 Bad directive or wrong number of arguments
 ```
 这是环境变量冲突导致的，需要把redis相关的环境变量去除，则启动成功
-  
+
 ---
 ### 3、安装及使用镜像
 ####  安装Mysql
@@ -366,7 +366,7 @@ Bad directive or wrong number of arguments
 ```shell script
     docker exec -it {{mysql server name}} /bin/bash
 ```
- 
+
   * 查看是否成功导入文件
 ```shell script
     ls -l {{sqlname}}.sql
@@ -440,9 +440,81 @@ docker system prune
 
 
 
+#### 安装过docker的系统重装系统再次安装后启动报错
+
+```
+v 19 15:06:33 VM_0_16_centos dockerd-current[10379]: time="2021-11-19T15:06:33.262087118+08:00" level=info msg="Firewalld running: false"
+Nov 19 15:06:33 VM_0_16_centos dockerd-current[10379]: Error starting daemon: Error initializing network controller: error obtaining controll...nsmod?)
+Nov 19 15:06:33 VM_0_16_centos dockerd-current[10379]: Perhaps iptables or your kernel needs to be upgraded.
+Nov 19 15:06:33 VM_0_16_centos dockerd-current[10379]: (exit status 3)
+Nov 19 15:06:33 VM_0_16_centos systemd[1]: docker.service: main process exited, code=exited, status=1/FAILURE
+Nov 19 15:06:33 VM_0_16_centos systemd[1]: Failed to start Docker Application Container Engine.
+Nov 19 15:06:33 VM_0_16_centos systemd[1]: Unit docker.service entered failed state.
+Nov 19 15:06:33 VM_0_16_centos systemd[1]: docker.service failed.
+```
+
+使用命令 `journalctl -xe | grep docker` 查看日志得
+
+```
+Nov 19 15:14:21 VM_0_16_centos dockerd-current[13155]: time="2021-11-19T15:14:21.926382325+08:00" level=warning msg="could not change group /var/run/docker.sock to docker: group docker not found"
+Nov 19 15:14:21 VM_0_16_centos dockerd-current[13155]: time="2021-11-19T15:14:21.934382961+08:00" level=info msg="libcontainerd: new containerd process, pid: 13162"
+Nov 19 15:14:21 VM_0_16_centos dockerd-current[13155]: time="2021-11-19T15:14:21.964378867+08:00" level=warning msg="Docker could not enable SELinux on the host system"
+Nov 19 15:14:21 VM_0_16_centos dockerd-current[13155]: time="2021-11-19T15:14:21.974320603+08:00" level=info msg="Graph migration to content-addressability took 0.00 seconds"
+Nov 19 15:14:21 VM_0_16_centos dockerd-current[13155]: time="2021-11-19T15:14:21.979261111+08:00" level=info msg="Loading containers: start."
+Nov 19 15:14:21 VM_0_16_centos dockerd-current[13155]: time="2021-11-19T15:14:21.984177860+08:00" level=warning msg="Running modprobe nf_nat failed with message: `modprobe: WARNING: Module nf_nat not found.`, error: exit status 1"
+Nov 19 15:14:21 VM_0_16_centos dockerd-current[13155]: time="2021-11-19T15:14:21.994935787+08:00" level=info msg="Firewalld running: false"
+Nov 19 15:14:22 VM_0_16_centos dockerd-current[13155]: Error starting daemon: Error initializing network controller: error obtaining controller instance: failed to create NAT chain: iptables failed: iptables --wait -t nat -N DOCKER: iptables v1.4.21: can't initialize iptables table `nat': Table does not exist (do you need to insmod?)
+Nov 19 15:14:22 VM_0_16_centos dockerd-current[13155]: Perhaps iptables or your kernel needs to be upgraded.
+Nov 19 15:14:22 VM_0_16_centos dockerd-current[13155]: (exit status 3)
+Nov 19 15:14:22 VM_0_16_centos systemd[1]: docker.service: main process exited, code=exited, status=1/FAILURE
+-- Subject: Unit docker.service has failed
+-- Unit docker.service has failed.
+```
 
 
 
+看日志得知是 `iptables` 的设置有问题，使用 `ip a` 查看
+
+```
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 52:54:00:52:6b:ea brd ff:ff:ff:ff:ff:ff
+    inet 192.168.64.4/24 brd 192.168.64.255 scope global eth0
+       valid_lft forever preferred_lft forever
+```
+
+发现没有 `docker0` 的桥接网络，则手动添加一个
+
+```
+ip link add name docker0 type bridge
+ip addr add dev docker0 172.17.0.1/16
+```
+
+再次使用 `ip a` 查看，则会发现多了 `docker0`的网络
+
+```
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 52:54:00:52:6b:ea brd ff:ff:ff:ff:ff:ff
+    inet 192.168.64.4/24 brd 192.168.64.255 scope global eth0
+       valid_lft forever preferred_lft forever
+3: docker0: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN 
+    link/ether 16:e5:98:30:54:05 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+```
+
+删除网桥使用 `brctl delbr docker0` 
+
+
+
+然后重新启动docker即可
 
 
 
