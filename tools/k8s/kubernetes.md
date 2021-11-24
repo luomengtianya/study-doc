@@ -4,7 +4,7 @@
 
 
 #### Linux安装k8s
-##### 下载k8s
+##### 下载kubectl（可先不安装）
 * 下载最新版本
 ```shell script
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -123,8 +123,23 @@ net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
 EOF
 sudo sysctl --system
-```   
+```
+若是执行 `modprobe br_netfilter` 报
+
+```
+modprobe: FATAL: Module br_netfilter not found.
+```
+
+则需要安装模块
+
+```
+yum install bridge-utils  -y
+```
+
+
+
 * 安装kubeadm
+
 ```shell script
 # 安装依赖
 cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
@@ -146,7 +161,7 @@ sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 
 sudo systemctl enable --now kubelet
 
-```    
+```
 * 使用阿里云镜像安装
 ```shell script
 # 配置源
@@ -161,8 +176,82 @@ gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors
 EOF
 
 # 安装
-yum install -y kubelet-1.11.2 kubeadm-1.11.2 kubectl-1.11.2 ipvsadm
+yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+
+systemctl enable --now kubelet
 ```
+
+
+
+* 下载所需要的依赖
+
+  ```
+  kubeadm config images pull
+  ```
+
+  
+
+* 国内下载依赖
+
+  * 查询镜像
+
+  ```
+  kubeadm config images list
+  ```
+
+  
+
+  * 下载
+
+    ```
+    # kube-adm-images.sh
+    # 如下镜像列表和版本，请运行kubeadm config images list命令获取
+    # 
+    images=(
+      kube-apiserver:v1.22.4
+      kube-controller-manager:v1.22.4
+      kube-scheduler:v1.22.4
+      kube-proxy:v1.22.4
+      pause:3.5
+      etcd:3.5.0-0
+      coredns/coredns:v1.8.4
+    )
+    
+    for imageName in ${images[@]} ; do
+        docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/$imageName
+        docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/$imageName k8s.gcr.io/$imageName
+    done
+    ```
+  
+  
+  
+  
+    * 修改tag
+
+
+
+* 注 
+
+如果没有root的权限，可以把k8s导入到 ~/.local/bin 文件夹
+```shell script
+mkdir -p ~/.local/bin/kubectl
+mv ./kubectl ~/.local/bin/kubectl
+# and then add ~/.local/bin/kubectl to $PATH
+```
+
+* 检查是否导入成功
+```shell script
+kubectl version --client
+```
+
+* 成功则返回数据
+```text
+Client Version: version.Info{Major:"1", Minor:"22", GitVersion:"v1.22.4", GitCommit:"b695d79d4f967c403a96986f1750a35eb75e75f1", GitTreeState:"clean", BuildDate:"2021-11-17T15:48:33Z", GoVersion:"go1.16.10", Compiler:"gc", Platform:"linux/amd64"}
+```
+
+
+
+##### 启动k8s
 
 * 使用 `kubeadm init` 排查错误
 ```text
@@ -176,7 +265,18 @@ tee <<EOF > /proc/sys/net/ipv4/ip_forward
 1
 EOF
 ```
+
+
+* 阿里云镜像启动
+
+  ```
+  kubeadm init --image-repository registry.aliyuncs.com/google_containers
+  ```
+
+  
+
 * 当所有问题解除后 运行`kubeadm init` 会启动 Kubernets
+
 ```text
 Your Kubernetes control-plane has initialized successfully!
 
@@ -218,65 +318,371 @@ kubectl create clusterrolebinding permissive-binding   --clusterrole=cluster-adm
 
 
 
+* 初始化master节点
+
+  ```
+  sudo kubeadm config print init-defaults
+  sudo kubeadm config print join-defaults
+  ```
 
 
 
+* 查看kubelet的状态
+
+  ```
+  [root@VM-242-16-centos ~]# systemctl status kubelet
+  ● kubelet.service - kubelet: The Kubernetes Node Agent
+     Loaded: loaded (/usr/lib/systemd/system/kubelet.service; enabled; vendor preset: disabled)
+    Drop-In: /usr/lib/systemd/system/kubelet.service.d
+             └─10-kubeadm.conf
+     Active: active (running) since Wed 2021-11-24 11:13:48 CST; 7min ago
+       Docs: https://kubernetes.io/docs/
+   Main PID: 29254 (kubelet)
+     CGroup: /system.slice/kubelet.service
+             └─29254 /usr/bin/kubelet --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.c...
+  
+  ```
+
+  
+
+##### 安装网络插件
+
+* 下载
+
+  ```
+  curl -LO https://docs.projectcalico.org/manifests/calico.yaml
+  ```
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##### 安装k8s
 * 安装
-```shell script
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-# 设置在root组root用户下并赋予读、写、执行权限
+
+  ```
+   kubectl apply -f /root/calico.yaml
+   
+   configmap/calico-config created
+  customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/caliconodestatuses.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/ipreservations.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org created
+  customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org created
+  clusterrole.rbac.authorization.k8s.io/calico-kube-controllers created
+  clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers created
+  clusterrole.rbac.authorization.k8s.io/calico-node created
+  clusterrolebinding.rbac.authorization.k8s.io/calico-node created
+  daemonset.apps/calico-node created
+  serviceaccount/calico-node created
+  deployment.apps/calico-kube-controllers created
+  serviceaccount/calico-kube-controllers created
+  Warning: policy/v1beta1 PodDisruptionBudget is deprecated in v1.21+, unavailable in v1.25+; use policy/v1 PodDisruptionBudget
+  poddisruptionbudget.policy/calico-kube-controllers created
+  ```
+
+
+
+* 查看
+
+```
+[root@VM-242-16-centos ~]# kubectl get pods -A
+NAMESPACE     NAME                                       READY   STATUS              RESTARTS   AGE
+kube-system   calico-kube-controllers-56b8f699d9-88pd4   0/1     Pending             0          41s
+kube-system   calico-node-pmjct                          0/1     Init:ErrImagePull   0          41s
+kube-system   coredns-78fcd69978-5w48s                   0/1     Pending             0          19m
+kube-system   coredns-78fcd69978-9xcj8                   0/1     Pending             0          19m
+kube-system   etcd-vm-242-16-centos                      1/1     Running             0          19m
+kube-system   kube-apiserver-vm-242-16-centos            1/1     Running             0          19m
+kube-system   kube-controller-manager-vm-242-16-centos   1/1     Running             0          19m
+kube-system   kube-proxy-2cv82                           1/1     Running             0          19m
+kube-system   kube-scheduler-vm-242-16-centos            1/1     Running             0          19m
 ```
 
-* 注 
 
-如果没有root的权限，可以把k8s导入到 ~/.local/bin 文件夹
-```shell script
-mkdir -p ~/.local/bin/kubectl
-mv ./kubectl ~/.local/bin/kubectl
-# and then add ~/.local/bin/kubectl to $PATH
+
 ```
-
-* 检查是否导入成功
-```shell script
-kubectl version --client
-```
-
-* 成功则返回数据
-```text
-Client Version: version.Info{Major:"1", Minor:"21", GitVersion:"v1.21.0", GitCommit:"cb303e613a121a29364f75cc67d3d580833a7479", GitTreeState:"clean", BuildDate:"2021-04-08T16:31:21Z", GoVersion:"go1.16.1", Compiler:"gc", Platform:"linux/amd64"}
+[root@VM-242-16-centos ~]# kubectl logs calico-node-pmjct -n kube-system
+Error from server (BadRequest): container "calico-node" in pod "calico-node-pmjct" is waiting to start: PodInitializing
 ```
 
 
 
+这个可能是镜像没有下载成功，等一段时间可能就会自动自动完成
+
+```
+[root@VM-242-16-centos ~]# kubectl get pods -A
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
+kube-system   calico-kube-controllers-56b8f699d9-88pd4   1/1     Running   0          3h37m
+kube-system   calico-node-pmjct                          1/1     Running   0          3h37m
+kube-system   coredns-78fcd69978-5w48s                   1/1     Running   0          3h56m
+kube-system   coredns-78fcd69978-9xcj8                   1/1     Running   0          3h56m
+kube-system   etcd-vm-242-16-centos                      1/1     Running   0          3h56m
+kube-system   kube-apiserver-vm-242-16-centos            1/1     Running   0          3h56m
+kube-system   kube-controller-manager-vm-242-16-centos   1/1     Running   0          3h56m
+kube-system   kube-proxy-2cv82                           1/1     Running   0          3h56m
+kube-system   kube-scheduler-vm-242-16-centos            1/1     Running   0          3h56m
+```
+
+
+
+##### 添加dashboard
+
+* 下载文件
+
+  ```
+  curl -LO https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
+  ```
+
+  
+
+* 修改NodePort映射
+
+  ```
+  [root@xuegod63 ~]# vim recommended.yaml
+  kind: Service
+  apiVersion: v1
+  metadata:
+    labels:
+      k8s-app: kubernetes-dashboard
+    name: kubernetes-dashboard
+    namespace: kubernetes-dashboard
+  spec:
+    ports:
+      - port: 443
+        targetPort: 8443
+        nodePort: 30000
+    type: NodePort
+    selector:
+      k8s-app: kubernetes-dashboard
+      
+      
+  添加数据：
+        nodePort: 30000
+    type: NodePort
+  
+  ```
+
+  
+
+* 追加权限数据
+
+  ```
+  [root@xuegod63 ~]# cat >> recommended.yaml << EOF
+  ---
+  # ------------------- dashboard-admin ------------------- #
+  apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: dashboard-admin
+    namespace: kubernetes-dashboard
+  ---
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: dashboard-admin
+  subjects:
+  - kind: ServiceAccount
+    name: dashboard-admin
+    namespace: kubernetes-dashboard
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cluster-admin
+  EOF
+  ```
+
+* ![image-20211124151632386](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211124151632386.png)
+
+
+
+* 启动dashboard
+
+  ```
+  [root@VM-242-16-centos ~]# kubectl apply -f recommended.yaml
+  namespace/kubernetes-dashboard created
+  serviceaccount/kubernetes-dashboard created
+  service/kubernetes-dashboard created
+  secret/kubernetes-dashboard-certs created
+  secret/kubernetes-dashboard-csrf created
+  secret/kubernetes-dashboard-key-holder created
+  configmap/kubernetes-dashboard-settings created
+  role.rbac.authorization.k8s.io/kubernetes-dashboard created
+  clusterrole.rbac.authorization.k8s.io/kubernetes-dashboard created
+  rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created
+  clusterrolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created
+  deployment.apps/kubernetes-dashboard created
+  service/dashboard-metrics-scraper created
+  Warning: spec.template.metadata.annotations[seccomp.security.alpha.kubernetes.io/pod]: deprecated since v1.19; use the "seccompProfile" field instead
+  deployment.apps/dashboard-metrics-scraper created
+  serviceaccount/dashboard-admin created
+  clusterrolebinding.rbac.authorization.k8s.io/dashboard-admin created
+  ```
+
+
+
+* 查看安装
+
+  ```
+  [root@VM-16-12-centos ~]# kubectl get pods -A
+  NAMESPACE              NAME                                         READY   STATUS    RESTARTS   AGE
+  kube-system            calico-kube-controllers-56b8f699d9-xwbt8     1/1     Running   0          152m
+  kube-system            calico-node-z26cq                            1/1     Running   0          152m
+  kube-system            coredns-7f6cbbb7b8-7bq4p                     1/1     Running   0          153m
+  kube-system            coredns-7f6cbbb7b8-ccb8x                     1/1     Running   0          153m
+  kube-system            etcd-vm-16-12-centos                         1/1     Running   0          154m
+  kube-system            kube-apiserver-vm-16-12-centos               1/1     Running   0          154m
+  kube-system            kube-controller-manager-vm-16-12-centos      1/1     Running   0          154m
+  kube-system            kube-proxy-9v4ng                             1/1     Running   0          153m
+  kube-system            kube-scheduler-vm-16-12-centos               1/1     Running   0          154m
+  kubernetes-dashboard   dashboard-metrics-scraper-5594697f48-gr794   1/1     Running   0          78m
+  kubernetes-dashboard   kubernetes-dashboard-57c9bfc8c8-4xj6t        1/1     Running   0          78m
+  ```
+
+
+
+* 浏览网站
+
+  ```
+  https://49.235.198.77:30000/
+  ```
+
+  提示 `您的连接不是私密连接` 并限制了访问。这是因为https证书无效导致的，可以自己新建一个证书
+
+
+
+* 查看是否安装成功
+
+  ```
+  [root@VM-16-12-centos ~]# kubectl get service -n kubernetes-dashboard
+  NAME                        TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)         AGE
+  dashboard-metrics-scraper   ClusterIP   10.103.242.208   <none>        8000/TCP        80m
+  kubernetes-dashboard        NodePort    10.110.154.160   <none>        443:30000/TCP   80m
+  ```
+
+
+
+* 删除以前的老证书
+
+  ```
+  kubectl delete secret -n kubernetes-dashboard kubernetes-dashboard-certs
+  ```
+
+
+
+* 自己签发证书
+
+```
+mkdir keys & cd keys
+
+openssl genrsa -out tls.key 2048
+
+openssl req -new -out tls.csr -key tls.key -subj '/CN=49.235.198.77'
+
+openssl x509 -req -in tls.csr -signkey tls.key -out tls.crt
+
+ls
+tls.crt tls.csr tls.key
+```
+
+
+
+* 根据新证书，创建secret
+
+  ```
+  cd keys # 如果本身就在keys文件夹下，则可以省略该步骤
+  
+  kubectl create secret generic kubernetes-dashboard-certs --from-file=./ -n kubernetes-dashboard
+  ```
+
+
+
+* 修改kubernetes-dashboard deployment,启用新的secret
+
+  ```
+   kubectl edit deploy kubernetes-dashboard -n kubernetes-dashboard
+  ...
+   31   template:
+   32     metadata:
+   33       creationTimestamp: null
+   34       labels:
+   35         k8s-app: kubernetes-dashboard
+   36     spec:
+   37       containers:
+   38       - args:
+   41         - --auto-generate-certificates
+   42         - --namespace=kubernetes-dashboard
+   43         image: kubernetesui/dashboard:v2.0.0
+   44         imagePullPolicy: Always
+  ...
+  
+  # 在args中添加两行
+         containers:
+         - args:
+           - --tls-cert-file=/tls.crt
+           - --tls-key-file=/tls.key
+        
+        
+  # 添加之后
+  ...
+   31   template:
+   32     metadata:
+   33       creationTimestamp: null
+   34       labels:
+   35         k8s-app: kubernetes-dashboard
+   36     spec:
+   37       containers:
+   38       - args:
+   39         - --tls-cert-file=/tls.crt   < ----- 这里
+   40         - --tls-key-file=/tls.key    < ----- 这里
+   41         - --auto-generate-certificates
+   42         - --namespace=kubernetes-dashboard
+   43         image: kubernetesui/dashboard:v2.0.0
+   44         imagePullPolicy: Always
+   ...
+  ```
+
+  
+
+
+
+* 查看登陆令牌
+
+  ```
+  [root@VM-16-12-centos keys]# kubectl describe secrets -n kubernetes-dashboard dashboard-admin
+  Name:         dashboard-admin-token-8h6tp
+  Namespace:    kubernetes-dashboard
+  Labels:       <none>
+  Annotations:  kubernetes.io/service-account.name: dashboard-admin
+                kubernetes.io/service-account.uid: 748973a3-baa1-434e-a5ea-0fad79711443
+  
+  Type:  kubernetes.io/service-account-token
+  
+  Data
+  ====
+  ca.crt:     1099 bytes
+  namespace:  20 bytes
+  token:      eyJhbGciOiJSUzI1NiIsImtpZCI6ImFJZFBHTV9VcHNhd215UGpWV3FCTVpnWUJZQmgxV1Z3LW45cTllUHBodkUifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkYXNoYm9hcmQtYWRtaW4tdG9rZW4tOGg2dHAiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGFzaGJvYXJkLWFkbWluIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiNzQ4OTczYTMtYmFhMS00MzRlLWE1ZWEtMGZhZDc5NzExNDQzIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmVybmV0ZXMtZGFzaGJvYXJkOmRhc2hib2FyZC1hZG1pbiJ9.P1SMmg432oZBufegLPrR0T-lYPkplCRiSvmPVCvGuln07epNCx-CFeqF-npIF0rzY9hlo3TFCIJpOzn83IHl9Nxz2HPFKx9ryD6dKLz9A19QL8DZu-wNSK9EGr_SKX-4NQQjPguP4qbBmjCtWOvhsn5z2C1Hs-uAiYAy2yGWnWSFm9jbNasfdj0hpI51_ZxJDOr4IN93EC3ejcdjy9e9IS9KR8a68tgW1jYz1o7PPjei6lvkyLl-G87cVkMVRMWZlvQQYf9btu_E_6mCbaR6A7J_ol7AOtThCNeRJER8ZZDgvsxde2ik5ys_oCpIct1X7Hy-IzNysawyoJodTAJq4Q
+  ```
+
+  
+
+* 登陆网站并设置token数据
+
+  ![image-20211124175201076](/Users/panjianghong/Library/Application Support/typora-user-images/image-20211124175201076.png)
 
 
 
 
 
-
-
-
-
-
-
-
+#### 节点加入集群
 

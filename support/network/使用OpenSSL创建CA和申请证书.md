@@ -355,7 +355,7 @@ openssl req -new -x509 -key private/cakey.pem -subj "/C=CN/ST=HN/O=tencent-test/
 -- 生成公钥
 (umask 066;openssl genrsa -out certs/test.key 2048)
 -- 生成证书申请文件
-openssl req -new -key certs/test.key -subj "/C=CN/ST=HN/O=tencent-test/OU=tencent-test1/CN=9.134.242.16" -out certs/test.csr
+openssl req -new -key certs/test.key -subj "/C=CN/ST=HN/O=tencent-test/OU=tencent-test2/CN=9.134.242.16" -out certs/test.csr
 -- 生成证书
 openssl ca -in certs/test.csr -out certs/test.crt -days 365
 

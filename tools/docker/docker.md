@@ -508,7 +508,7 @@ ip addr add dev docker0 172.17.0.1/16
     link/ether 16:e5:98:30:54:05 brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 scope global docker0
        valid_lft forever preferred_lft forever
-```
+``` 
 
 删除网桥使用 `brctl delbr docker0` 
 
