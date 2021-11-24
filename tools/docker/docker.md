@@ -65,7 +65,18 @@ sudo yum-config-manager \
 sudo yum install docker-ce docker-ce-cli containerd.io
 ```
 
+```注：docker-ce-cli 作用是docker命令行工具包 *containerd.io* 作用是容器接口相关包```
+
+启动docker并设置空开机自启
+
+```she
+systemctl start docker && systemctl enable docker
+```
+
+
+
 ####  [腾讯云服务器安装docker](https://cloud.tencent.com/document/product/213/46000?from=information.detail.%E8%85%BE%E8%AE%AF%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AE%89%E8%A3%85docker)
+
 ```shell script
 yum update
 yum install epel-release -y
