@@ -4,7 +4,7 @@
 
 
 #### Linux安装k8s
-##### 下载kubectl（可先不安装）
+##### 下载kubectl（可先不安装，后续也会安装上）
 * 下载最新版本
 ```shell script
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -93,8 +93,6 @@ echo 'complete -F __start_kubectl k' >>~/.bashrc
 
 
 
-
-
 #### 安装kubeadm
 ##### 什么是kubeadm
 ```text
@@ -138,7 +136,7 @@ yum install bridge-utils  -y
 
 
 
-* 安装kubeadm
+* 安装kubeadm(没有外网会超时)
 
 ```shell script
 # 安装依赖
@@ -157,6 +155,7 @@ EOF
 sudo setenforce 0
 sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
+# 没有外网会超时
 sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 
 sudo systemctl enable --now kubelet
@@ -651,7 +650,11 @@ tls.crt tls.csr tls.key
    ...
   ```
 
-  
+  这种方式签发的证书也是不安全的，浏览器上会有红色的提示
+
+  ![image-20211125114547930](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211125114547930.png)
+
+​		因为这不是被信赖的机构颁发的证书，但是这只是我们自己使用的话，可以忽略这个问题；若是需要对外提供服务，最好还是使用被信赖的证书。
 
 
 

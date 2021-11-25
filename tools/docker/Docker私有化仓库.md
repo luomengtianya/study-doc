@@ -1,9 +1,9 @@
 #### 资料
 
 * [registry](https://docs.docker.com/registry/deploying/)
-
 * [docker-registry-web](https://hub.docker.com/r/hyper/docker-registry-web)
 * [docker-daemon](https://docs.docker.com/engine/reference/commandline/dockerd/)
+* [harbor](https://github.com/goharbor/harbor)
 
 #### 查看仓库镜像
 
@@ -13,13 +13,11 @@ docker pull registry
 ```
 
 
-
 #### 启动仓库镜像
 
 ```shell
 $ docker run -d -p 5000:5000 --restart=always --name=docker-registry -v /var/local/docker-registry:/var/lib/registry registry
 ```
-
 
 
 ```
@@ -80,7 +78,6 @@ Get https://9.134.242.16:8080/v2/: http: server gave HTTP response to HTTPS clie
 ```
 
 
-
 ##### push失败(https)问题
 
 这是因为Docker在1.3.x之后默认docker registry使用的是https，为了解决这个问题，修改`本地主机`的docker启动配置文件
@@ -100,13 +97,10 @@ systemctl daemon-reload && systemctl restart docker
 ```
 
 
-
 注意这是push或者pull的机器上配置修改，而不是私有化仓库中修改
 
 
-
 macos的deamon.json在 `~/.docker` 文件夹下
-
 
 
 另外，`linux`下还可以修改 `/etc/sysconfig/docker`
@@ -122,7 +116,8 @@ fi
 
 修改 `OPTIONS`,添加 `--insecure-registry=192.168.59.100:5000`
 
-以及修改 `/usr/lib/systemd/system/docker.service`
+
+或者修改 `/usr/lib/systemd/system/docker.service`
 
 ```
 ···
@@ -208,3 +203,16 @@ docker push 9.134.242.16:5000/nginx
 这样本地仓库中就会存在一个nginx的镜像了
 
 
+
+#### 部署harbor
+
+##### 什么是harbor
+
+```
+Docker容器应用的开发和运行离不开可靠的镜像管理，虽然Docker官方也提供了公共的镜像仓库，但是从安全和效率等方面考虑，部署我们私有环境内的Registry也是非常必要的。Harbor是由VMware公司开源的企业级的Docker Registry管理项目，它包括权限管理(RBAC)、LDAP、日志审核、管理界面、自我注册、镜像复制和中文支持等功能。
+官网地址：https://github.com/goharbor/harbor
+```
+
+
+
+`待续`
