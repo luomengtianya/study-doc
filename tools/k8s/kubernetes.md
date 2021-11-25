@@ -593,6 +593,8 @@ ls
 tls.crt tls.csr tls.key
 ```
 
+自己签发的证书也有信任问题，需要安装证书并且设置信任才可以访问。
+
 
 
 * 根据新证书，创建secret
@@ -603,7 +605,7 @@ tls.crt tls.csr tls.key
   kubectl create secret generic kubernetes-dashboard-certs --from-file=./ -n kubernetes-dashboard
   ```
 
-
+  
 
 * 修改kubernetes-dashboard deployment,启用新的secret
 
@@ -687,5 +689,62 @@ tls.crt tls.csr tls.key
 
 
 
-#### 节点加入集群
+#### 使用kubernetes
+
+##### 节点加入集群
+
+* 查询加入节点命令
+
+  ```
+  [root@VM-16-12-centos ~]# kubeadm token create --print-join-command
+  kubeadm join 172.17.16.12:6443 --token 80u9bx.g9cf8nvkdovfd3s2 --discovery-token-ca-cert-hash sha256:48f5a7dfc2f6ac00b27ca2ee727519a1564767ef9d9ef930d5da389536dd5d92
+  ```
+
+
+
+* 其余机器直接执行命令即可加入集群
+
+
+
+##### 部署容器
+
+![image-20211124210243160](/Users/panjianghong/Documents/JAVA/gitee/study-doc/tools/k8s/image-20211124210243160.png)
+
+```
+service： external 外部网络
+端口（port）：3000 目标端口（targetport）：80
+注：表单中创建pod时没有创建nodeport的选项，会自动创建在30000+以上的端口。
+
+关于port、targetport、nodeport的说明：
+nodeport是集群外流量访问集群内服务的端口，比如客户访问nginx，apache，
+port是集群内的pod互相通信用的端口类型，比如nginx访问mysql，而mysql是不需要让客户访问到的，port是service的的端口
+targetport目标端口，也就是最终端口，也就是pod的端口。$
+```
+
+填写完成后，直接点击deployment。若是只有一个master节点，会部署失败
+
+```
+0/1 nodes are available: 1 node(s) had taint {node-role.kubernetes.io/master: }, that the pod didn't tolerate.
+```
+
+这时需要允许master进行pods的部署
+
+```
+[root@VM-16-12-centos ~]# kubectl taint nodes --all node-role.kubernetes.io/master-
+node/vm-16-12-centos untainted
+```
+
+
+
+![截屏2021-11-24 下午9.20.04](/Users/panjianghong/Documents/JAVA/gitee/study-doc/tools/k8s/截屏2021-11-24 下午9.20.04.png)
+
+这个32042端口才是外网访问的端口数据
+
+
+
+
+
+
+
+
 
