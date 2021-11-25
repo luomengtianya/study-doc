@@ -678,7 +678,7 @@ tls.crt tls.csr tls.key
 
 * 登陆网站并设置token数据
 
-  ![image-20211124175201076](/Users/panjianghong/Library/Application Support/typora-user-images/image-20211124175201076.png)
+  ![image-20211124175201076](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211124175201076.png)
 
 
 
