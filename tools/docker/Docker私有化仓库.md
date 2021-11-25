@@ -4,6 +4,7 @@
 * [docker-registry-web](https://hub.docker.com/r/hyper/docker-registry-web)
 * [docker-daemon](https://docs.docker.com/engine/reference/commandline/dockerd/)
 * [harbor](https://github.com/goharbor/harbor)
+* [harbor安装](https://goharbor.io/docs/2.0.0/install-config/)
 
 #### 查看仓库镜像
 
@@ -144,7 +145,9 @@ ExecReload=/bin/kill -s HUP $MAINPID
 
 
 
-##### 创建一个TLS（https访问）
+##### 创建一个TLS
+
+`https访问-问题较多，私有仓库可以忽略`
 
 使用上述的方式修改https为http的方式，是一种简单粗暴的方法，我们可以为registry添加TLS(*Transport Layer Security*)访问权限。这需要
 
@@ -158,13 +161,15 @@ ExecReload=/bin/kill -s HUP $MAINPID
 --restart=always \
 --name=docker-registry \
 -v /var/local/docker-registry:/var/lib/registry \
--v /etc/pki/CA/certs:/certs \
+-v /var/local/jgaonet/Apache:/certs \
 -e REGISTRY_HTTP_ADDR=0.0.0.0:5000 \
--e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/test.crt \
--e REGISTRY_HTTP_TLS_KEY=/certs/test.key \
+-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/2_jgaonet.com.crt \
+-e REGISTRY_HTTP_TLS_KEY=/certs/3_jgaonet.com.key \
 -p 5000:5000 \
 registry
 ```
+
+
 
 ##### pull镜像
 
@@ -204,6 +209,67 @@ docker push 9.134.242.16:5000/nginx
 
 
 
+##### 添加登陆账号
+
+* 添加账号信息
+
+  ```
+  mkdir auth
+   docker run \
+    --entrypoint htpasswd \
+    httpd:2 -Bbn admin 123456 > auth/htpasswd
+  ```
+
+
+
+* 重新启动registry
+
+  ```
+  docker run -d -p 5000:5000 \
+  --restart=always \
+  --name=docker-registry \
+  -v /var/local/auth:/auth \
+  -v /var/local/docker-registry:/var/lib/registry \
+  -e "REGISTRY_AUTH=htpasswd" \
+  -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+  -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
+  registry
+  ```
+
+
+
+* 重新启动registry-web
+
+  添加 `config.yaml` 配置
+
+  ```
+  registry:
+    # Docker registry url
+    url: http://docker-registry:5000/v2
+    # Docker registry fqdn
+    name: localhost:5000
+    # To allow image delete, should be false
+    readonly: false
+    auth:
+      # Disable authentication
+      enabled: true
+  ```
+
+  
+
+  ```
+  docker run -d -p 8080:8080 \
+  --name registry-web \
+  --link docker-registry \
+  -v /var/local/config.yaml:/conf/config.yml:ro \
+  hyper/docker-registry-web
+  
+  ```
+
+  
+
+
+
 #### 部署harbor
 
 ##### 什么是harbor
@@ -212,6 +278,27 @@ docker push 9.134.242.16:5000/nginx
 Docker容器应用的开发和运行离不开可靠的镜像管理，虽然Docker官方也提供了公共的镜像仓库，但是从安全和效率等方面考虑，部署我们私有环境内的Registry也是非常必要的。Harbor是由VMware公司开源的企业级的Docker Registry管理项目，它包括权限管理(RBAC)、LDAP、日志审核、管理界面、自我注册、镜像复制和中文支持等功能。
 官网地址：https://github.com/goharbor/harbor
 ```
+
+
+
+#####  下载harbor
+
+```
+# 下载离线安装包
+wget https://storage.googleapis.com/harbor-releases/release-1.8.0/harbor-offline-installer-v1.8.0.tgz
+
+# 解压安装包
+tar xvf harbor-offline-installer-v1.8.0.tgz
+
+```
+
+
+
+也可以直接到 [git](https://github.com/goharbor/harbor/releases) 上面下载安装包
+
+
+
+
 
 
 
