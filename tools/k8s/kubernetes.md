@@ -652,11 +652,41 @@ tls.crt tls.csr tls.key
    ...
   ```
 
-  这种方式签发的证书也是不安全的，浏览器上会有红色的提示
+  
 
+  默认的启动镜像回到中央仓库中获取，若是我们希望直接使用本地仓库的镜像，则修改配置
+  
+  ```
+  imagePullPolicy: Always      
+  修改为     
+  imagePullPolicy: Never
+  ```
+  
+  公司的开发机下载dashboard镜像特别慢，可能等半天才会启动成功，可以自己导入镜像后用本地镜像的启动方式启动
+  
+  
+  
+  这种方式签发的证书也是不安全的，浏览器上会有红色的提示
+  
   ![image-20211125114547930](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211125114547930.png)
 
 ​		因为这不是被信赖的机构颁发的证书，但是这只是我们自己使用的话，可以忽略这个问题；若是需要对外提供服务，最好还是使用被信赖的证书。
+
+
+
+![image-20211126084956157](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211126084956157.png)
+
+
+
+直接点击证书拖动到电脑界面，证书就会被复制出来，然后双击证书就可以安装
+
+
+
+![image-20211126085053528](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211126085053528.png)
+
+证书被信任之后，就可以继续访问了
+
+![image-20211126085157859](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211126085157859.png)
 
 
 
