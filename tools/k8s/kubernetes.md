@@ -500,7 +500,7 @@ kube-system   kube-scheduler-vm-242-16-centos            1/1     Running   0    
   EOF
   ```
 
-* ![image-20211124151632386](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211124151632386.png)
+* ![image-20211124151632386](./image-20211124151632386.png)
 
 
 
@@ -618,7 +618,7 @@ tls.crt tls.csr tls.key
    34       labels:
    35         k8s-app: kubernetes-dashboard
    36     spec:
-   37       containers:
+   37       :q:
    38       - args:
    41         - --auto-generate-certificates
    42         - --namespace=kubernetes-dashboard
@@ -652,7 +652,7 @@ tls.crt tls.csr tls.key
    ...
   ```
 
-  
+  ![image-20211209160924724](/Users/panjianghong/Documents/project/demand-design/教育号/迭代4-oapi权限改造/image-20211209160924724.png)
 
   默认的启动镜像回到中央仓库中获取，若是我们希望直接使用本地仓库的镜像，则修改配置
   
@@ -668,13 +668,13 @@ tls.crt tls.csr tls.key
   
   这种方式签发的证书也是不安全的，浏览器上会有红色的提示
   
-  ![image-20211125114547930](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211125114547930.png)
+  ![image-20211125114547930](./image-20211125114547930.png)
 
 ​		因为这不是被信赖的机构颁发的证书，但是这只是我们自己使用的话，可以忽略这个问题；若是需要对外提供服务，最好还是使用被信赖的证书。
 
 
 
-![image-20211126084956157](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211126084956157.png)
+![image-20211126084956157](./image-20211126084956157.png)
 
 
 
@@ -682,11 +682,11 @@ tls.crt tls.csr tls.key
 
 
 
-![image-20211126085053528](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211126085053528.png)
+![image-20211126085053528](./image-20211126085053528.png)
 
 证书被信任之后，就可以继续访问了
 
-![image-20211126085157859](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211126085157859.png)
+![image-20211126085157859](./image-20211126085157859.png)
 
 
 
@@ -713,7 +713,7 @@ tls.crt tls.csr tls.key
 
 * 登陆网站并设置token数据
 
-  ![image-20211124175201076](/Users/panjianghong/Documents/study-doc/tools/k8s/image-20211124175201076.png)
+  ![image-20211124175201076](./image-20211124175201076.png)
 
 
 
@@ -738,17 +738,135 @@ tls.crt tls.csr tls.key
 
 ##### 部署容器
 
-![image-20211124210243160](/Users/panjianghong/Documents/JAVA/gitee/study-doc/tools/k8s/image-20211124210243160.png)
+###### 命令行部署
+
+* 试运行一个镜像，获取部署配置数据
+
+  ```
+  [root@VM-242-16-centos ~]# kubectl create deployment nginx --image=nginx --dry-run -o yaml > nginx.yaml
+  W1128 09:10:04.367609   15028 helpers.go:555] --dry-run is deprecated and can be replaced with --dry-run=client.
+  [root@VM-242-16-centos ~]# 
+  [root@VM-242-16-centos ~]# cat nginx.yaml 
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: nginx
+    name: nginx
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: nginx
+    strategy: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: nginx
+      spec:
+        containers:
+        - image: nginx
+          name: nginx
+          resources: {}
+  status: {}
+  ```
+
+
+
+* 修改命名空间
+
+  ```
+  kubectl create namespace nginx-test
+  ```
+
+  
+
+  ```
+  [root@VM-16-12-centos ~]# vim nginx.yaml 
+  
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: nginx
+    name: nginx
+  +  namespace: nginx-test
+  ```
+
+  
+
+* 启动容器
+
+  ```
+  [root@VM-242-16-centos ~]# kubectl apply -f nginx.yaml 
+  
+  deployment.apps/nginx created
+  ```
+
+
+
+* 查看部署容器信息
+
+```
+[root@VM-242-16-centos ~]# kubectl get pods -A
+NAMESPACE              NAME                                         READY   STATUS    RESTARTS   AGE
+default                nginx-6799fc88d8-gpw5b                       0/1     Pending   0          2m15s
+```
+
+发现容器启动没有成功，是因为镜像没有下载好，需要等待一段时间，容器启动好之后查看部署信息
+
+```
+[root@VM-16-12-centos ~]# kubectl get deploy -A
+NAMESPACE              NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+kube-system            calico-kube-controllers     1/1     1            1           3d19h
+kube-system            coredns                     2/2     2            2           3d19h
+kubernetes-dashboard   dashboard-metrics-scraper   1/1     1            1           3d17h
+kubernetes-dashboard   kubernetes-dashboard        1/1     1            1           3d17h
+nginx-test             nginx                       1/1     1            1           61s
+```
+
+此时查看service是不存在nginx相关信息，因为没有指定交互端口
+
+```
+关于port、targetport、nodeport的说明：
+nodeport是集群外流量访问集群内服务的端口，比如客户访问nginx，apache，
+port是集群内的pod互相通信用的端口类型，比如nginx访问mysql，而mysql是不需要让客户访问到的，port是service的的端口
+targetport目标端口，也就是最终端口，也就是pod的端口
+```
+
+
+
+* 创建交互
+
+  ```
+  kubectl expose deployment nginx --port=8088 --type=NodePort -n nginx-test
+  ```
+
+  
+
+* 查看service信息
+
+  ```
+  [root@VM-16-12-centos ~]# kubectl get service -n nginx-test
+  NAME    TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+  nginx   NodePort   10.110.157.64   <none>        8088:31018/TCP   18s
+  ```
+
+  此时的对外访问端口是31018
+
+
+
+###### 管理界面部署
+
+![image-20211124210243160](./image-20211124210243160.png)
 
 ```
 service： external 外部网络
 端口（port）：3000 目标端口（targetport）：80
 注：表单中创建pod时没有创建nodeport的选项，会自动创建在30000+以上的端口。
-
-关于port、targetport、nodeport的说明：
-nodeport是集群外流量访问集群内服务的端口，比如客户访问nginx，apache，
-port是集群内的pod互相通信用的端口类型，比如nginx访问mysql，而mysql是不需要让客户访问到的，port是service的的端口
-targetport目标端口，也就是最终端口，也就是pod的端口。$
 ```
 
 填写完成后，直接点击deployment。若是只有一个master节点，会部署失败
@@ -766,9 +884,367 @@ node/vm-16-12-centos untainted
 
 
 
-![截屏2021-11-24 下午9.20.04](/Users/panjianghong/Documents/JAVA/gitee/study-doc/tools/k8s/截屏2021-11-24 下午9.20.04.png)
+![截屏2021-11-24 下午9.20.04](./截屏2021-11-24 下午9.20.04.png)
 
 这个32042端口才是外网访问的端口数据
+
+
+
+#### 部署ingress
+
+#####  简介
+
+[Ingress](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#ingress-v1beta1-networking-k8s-io) 公开了从集群外部到集群内[服务](https://kubernetes.io/zh/docs/concepts/services-networking/service/)的 HTTP 和 HTTPS 路由。 流量路由由 Ingress 资源上定义的规则控制。
+
+下面是一个将所有流量都发送到同一 Service 的简单 Ingress 示例：
+
+![image-20211128103133218](./image-20211128103133218.png)
+
+
+
+一个扇出（fanout）配置根据请求的 HTTP URI 将来自同一 IP 地址的流量路由到多个 Service。 Ingress 允许你将负载均衡器的数量降至最低
+
+![image-20211128103307735](./image-20211128103307735.png)
+
+
+
+*注*：ingress不是kunernetes内置的，需要单独安装，而且有多种类型，Googel Cloud Load Balancer、Nginx、Countour、Istio等，官方维护的是ingress-nginx
+
+
+
+##### ingress-nginx(待验证)
+
+* [官方文档](https://kubernetes.github.io/ingress-nginx/deploy/)
+
+* 先部署一个nginx服务，暴露端口 [nginx部署](#部署容器)
+
+
+
+* 下载Ingress部署文件 [GIT](https://github.com/kubernetes/ingress-nginx) [部署文件](https://kubernetes.github.io/ingress-nginx/deploy/)
+
+​    采用NodePort的部署方式
+
+```
+curl -LO https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.0/deploy/static/provider/cloud/deploy.yaml
+```
+
+
+
+* 修改镜像源
+
+  ```
+  ...
+  template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: ingress-nginx
+          app.kubernetes.io/instance: ingress-nginx
+          app.kubernetes.io/component: controller
+      spec:
+        dnsPolicy: ClusterFirst
+        containers:
+          - name: controller
+  -          image: k8s.gcr.io/ingress-nginx/controller:v1.1.0@sha256:f766669fdcf3dc26347ed273a55e754b427eb4411ee075a53f30718b4499076a
+  +          image: registry.cn-hangzhou.aliyuncs.com/google_containers/nginx-ingress-controller:v1.1.0
+            imagePullPolicy: IfNotPresent
+            lifecycle:
+              preStop:
+              
+  ...
+  # 这里有两处需要修改
+      spec:
+        containers:
+          - name: create
+  -          image: k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.1.1@sha256:64d8c73dca984af206adf9d6d7e46aa550362b1d7a01f3a0a91b20cc67868660
+  +          image: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-webhook-certgen:v1.1.1
+              
+  ...                       
+  ```
+
+  此处镜像可以自己在[阿里云](https://dev.aliyum.com)中查询
+
+
+
+###### 启动Ingress
+
+```
+[root@VM-16-12-centos ~]# kubectl apply -f ingress-nginx.yaml 
+
+namespace/ingress-nginx created
+serviceaccount/ingress-nginx created
+configmap/ingress-nginx-controller created
+clusterrole.rbac.authorization.k8s.io/ingress-nginx created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-nginx created
+role.rbac.authorization.k8s.io/ingress-nginx created
+rolebinding.rbac.authorization.k8s.io/ingress-nginx created
+service/ingress-nginx-controller-admission created
+service/ingress-nginx-controller created
+deployment.apps/ingress-nginx-controller created
+ingressclass.networking.k8s.io/nginx created
+validatingwebhookconfiguration.admissionregistration.k8s.io/ingress-nginx-admission created
+serviceaccount/ingress-nginx-admission created
+clusterrole.rbac.authorization.k8s.io/ingress-nginx-admission created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-nginx-admission created
+role.rbac.authorization.k8s.io/ingress-nginx-admission created
+rolebinding.rbac.authorization.k8s.io/ingress-nginx-admission created
+job.batch/ingress-nginx-admission-create created
+job.batch/ingress-nginx-admission-patch created
+```
+
+*注* ：此处修改了deploy.yaml的名称
+
+
+
+* 查看容器
+
+  ```
+  [root@VM-16-12-centos ~]# kubectl get pods -A
+  NAMESPACE              NAME                                         READY   STATUS    RESTARTS   AGE
+  ingress-nginx          ingress-nginx-controller-6546699b56-jxvks    1/1     Running   0          49s
+  ```
+
+   启动成功
+
+  ```
+  ```
+
+  
+
+  ```
+  [root@VM-16-12-centos ~]# kubectl get secret --namespace ingress-nginx
+  NAME                                  TYPE                                  DATA   AGE
+  default-token-mwz6f                   kubernetes.io/service-account-token   3      25m
+  ingress-nginx-admission-token-67685   kubernetes.io/service-account-token   3      25m
+  ingress-nginx-token-trzgd             kubernetes.io/service-account-token   3      25m
+  
+  [root@VM-16-12-centos ~]# kubectl get jobs -A
+  NAMESPACE       NAME                             COMPLETIONS   DURATION   AGE
+  ingress-nginx   ingress-nginx-admission-create   1/1           3s         7m20s
+  ingress-nginx   ingress-nginx-admission-patch    1/1           3s         7m20s
+  ```
+
+  *注* job是kubernetes的一次性任务，cornjob是kubernetes的定时任务
+
+
+
+###### 添加证书
+
+```
+kubectl create secret generic ingress-nginx-certs --from-file=./ -n ingress-nginx
+```
+
+
+
+
+
+###### 添加ingress数据
+
+```
+kubectl create ingress nginx-rule --class=nginx --rule=www.jgaonet.com/*=nginx:80
+
+-- 不执行也可以成功
+kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 80:80
+```
+
+
+
+* [添加路由规则](https://kubernetes.io/zh/docs/concepts/services-networking/ingress/) 版本不一致异常 (弃用)
+
+  ```
+  cat <<EOF > ./ingress-nginx-rule.yaml
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: k8s-ingress
+  spec:
+    rules:
+    - host: www.jgaonet.com
+      http:
+        paths:
+        - pathType: Prefix
+          path: /
+          backend:
+            name: nginx
+            port:
+              number: 80
+  EOF
+  
+  
+  cat <<EOF > ./ingress-nginx-rule.yaml
+  apiVersion: networking.k8s.io/v1beta1
+  kind: Ingress
+  metadata:
+    name: k8s-ingress
+  spec:
+    rules:
+    - host: www.jgaonet.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: nginx
+            servicePort: 80
+  EOF
+  ```
+
+
+
+* [添加路由规则2]
+
+```
+kubectl create ingress ingress-nginx-rule --class=nginx --rule=www.jgaonet.com/*=nginx:80
+
+
+kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 80:80
+```
+
+
+
+![image-20211209172614228](/Users/panjianghong/Documents/project/demand-design/教育号/迭代4-oapi权限改造/image-20211209172614228.png)
+
+此处监听的是127.0.0.1的80端口，这不是我们想要的，需要使用0.0.0.0，才能被外网访问，
+
+```
+-- kubectl port-forward svc/[service-name] -n [namespace] [external-port]:[internal-port] --address='0.0.0.0'
+
+kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 80:80 --address='0.0.0.0'
+```
+
+这个命令会中断，导致不能访问，所以需要后台访问
+
+```
+nohup kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 80:80 --address='0.0.0.0' &
+
+nohup kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 80:80 --address='0.0.0.0' &
+```
+
+此处是同时监听了http的80端口和https的443端口，可以按照自己想要的配置来处理
+
+
+
+删除规则
+
+```
+kubectl delete ingress ingress-nginx-rule
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://www.jgaonet.com/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
