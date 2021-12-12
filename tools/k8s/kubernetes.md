@@ -912,7 +912,7 @@ node/vm-16-12-centos untainted
 
 
 
-##### ingress-nginx(待验证)
+##### ingress-nginx
 
 * [官方文档](https://kubernetes.github.io/ingress-nginx/deploy/)
 
@@ -1006,10 +1006,11 @@ job.batch/ingress-nginx-admission-patch created
    启动成功
 
   ```
-  ```
-
+  
+```
   
 
+  
   ```
   [root@VM-16-12-centos ~]# kubectl get secret --namespace ingress-nginx
   NAME                                  TYPE                                  DATA   AGE
@@ -1021,8 +1022,8 @@ job.batch/ingress-nginx-admission-patch created
   NAMESPACE       NAME                             COMPLETIONS   DURATION   AGE
   ingress-nginx   ingress-nginx-admission-create   1/1           3s         7m20s
   ingress-nginx   ingress-nginx-admission-patch    1/1           3s         7m20s
-  ```
-
+```
+  
   *注* job是kubernetes的一次性任务，cornjob是kubernetes的定时任务
 
 
@@ -1055,35 +1056,25 @@ kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 
   apiVersion: networking.k8s.io/v1
   kind: Ingress
   metadata:
-    name: k8s-ingress
+    creationTimestamp: "2021-12-12T11:03:48Z"
+    generation: 1
+    name: ingress-nginx-rule
+    namespace: default
+    resourceVersion: "2052863"
+    uid: 3be1948c-312c-4055-997b-8eca8558bdd4
   spec:
+    ingressClassName: nginx
     rules:
-    - host: www.jgaonet.com
+    - host: jgaonet.com
       http:
         paths:
-        - pathType: Prefix
-          path: /
-          backend:
+        - backend:
+          service:
             name: nginx
             port:
               number: 80
-  EOF
-  
-  
-  cat <<EOF > ./ingress-nginx-rule.yaml
-  apiVersion: networking.k8s.io/v1beta1
-  kind: Ingress
-  metadata:
-    name: k8s-ingress
-  spec:
-    rules:
-    - host: www.jgaonet.com
-      http:
-        paths:
-        - path: /
-          backend:
-            serviceName: nginx
-            servicePort: 80
+          path: /
+          pathType: Prefix
   EOF
   ```
 
@@ -1115,7 +1106,7 @@ kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 
 ```
 nohup kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 80:80 --address='0.0.0.0' &
 
-nohup kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 80:80 --address='0.0.0.0' &
+nohup kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 443:443 --address='0.0.0.0' &
 ```
 
 此处是同时监听了http的80端口和https的443端口，可以按照自己想要的配置来处理
@@ -1132,125 +1123,58 @@ kubectl delete ingress ingress-nginx-rule
 
 
 
+###### enter.sh
 
+```
+#!/bin/bash
 
+if [ $# -lt 1 ]
+then
+  echo "请输入需要进入的容器名称"
+  exit
+fi
 
+namespace=`kubectl get pods -A | grep $1 | head -1 | awk '{print $1}'`
+if [ ! $namespace ]
+then
+  echo "未找到相关容器数据 $1"
+  exit
+fi
 
+pod=`kubectl get pods -A | grep $1 | head -1 | awk '{print $2}'`
 
+echo "enter=$1 and namespace=$namespace and pod=$pod"
 
+kubectl exec -it $pod -n $namespace -- /bin/bash
+```
 
 
 
 
 
+###### describe.sh
 
+```
+#!/bin/bash
 
+if [ $# -lt 2 ]
+then
+  echo "user ./describe.sh [option] [source]"
+  echo "option:[ingress\service\deployment]"
+  exit
+fi
 
+namespace=`kubectl get $1 -A | grep $2 | head -1 | awk '{print $1}'`
+if [ ! $namespace ]
+then
+  echo "未找到相关容器数据 $2"
+  exit
+fi
 
+sources=`kubectl get $1 -A | grep $2 | head -1 | awk '{print $2}'`
 
+echo "kubectl describe $1 $sources -n $namespace"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-http://www.jgaonet.com/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+kubectl describe $1 $sources -n $namespace 
+```
 
