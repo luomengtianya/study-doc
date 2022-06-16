@@ -1,3 +1,8 @@
+### 下载vmware
+* https://customerconnect.vmware.com/web/vmware/evalcenter?p=fusion-player-personal
+* luomengtianya@gmail.com Pan@1208
+
+
 ### 添加vmware虚拟机
 
 * 新建虚拟机
